@@ -1,103 +1,399 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import * as React from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabaseClient";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
+import { Calendar, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import HowItWorks from "@/components/how-it-works";
+import FAQ from "@/components/faq";
+import Footer from "@/components/footer";
+
+type EventRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  event_date: string | null; // YYYY-MM-DD
+  event_time: string | null; // HH:mm:ss
+  location: string | null;
+  poster_url: string | null;
+};
+
+export default function LandingPage() {
+  const supabase = React.useMemo(() => createClient(), []);
+  const [userId, setUserId] = React.useState<string | null>(null);
+  const [events7d, setEvents7d] = React.useState<EventRow[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  // Header auth state
+  React.useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+  }, [supabase]);
+
+  // Fetch approved events in the next 7 days (client-side)
+  React.useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const today = new Date();
+      const start = today.toISOString().slice(0, 10);
+      const endDate = new Date(today);
+      endDate.setDate(endDate.getDate() + 7);
+      const end = endDate.toISOString().slice(0, 10);
+
+      const { data, error } = await supabase
+        .from("events")
+        .select("id,name,description,event_date,event_time,location,poster_url")
+        .eq("status", "approved")
+        .gte("event_date", start)
+        .lt("event_date", end)
+        .order("is_featured", { ascending: false })
+        .order("event_date", { ascending: true })
+        .limit(48);
+
+      if (!error) setEvents7d((data as EventRow[]) ?? []);
+      setLoading(false);
+    })();
+  }, [supabase]);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      <SiteHeader userId={userId} />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {/* Section label above the hero */}
+      <div className="mx-auto max-w-6xl px-4 pt-8 pb-4 overflow-auto">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+            Happening in the next 7 days
+          </h1>
+          <Link
+            href="/events"
+            className="rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+            Browse all
+          </Link>
+        </div>
+      </div>
+
+      {/* Full-bleed hero carousel (no background color) */}
+      <HeroCarousel items={events7d} loading={loading} />
+
+      {/* Teaser: show up to 5 cards + View more */}
+      <EventsTeaser items={events7d} loading={loading} />
+
+      {/* How it works & FAQ */}
+      <main className="mx-auto max-w-6xl px-4 pb-12 space-y-14">
+        <HowItWorks isAuthed={!!userId} />
+        <FAQ />
+      </main>
+
+      <Footer />
+    </>
+  );
+}
+
+/* =========================
+   Header & Footer (simple)
+   ========================= */
+function SiteHeader({ userId }: { userId: string | null }) {
+  return (
+    <header className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <a href="/" className="flex items-center gap-2">
+          <img src="/logo.svg" alt="EventHub logo" className="h-8 w-48" />
+        </a>
+
+        <nav className="hidden gap-6 md:flex">
+          <a href="/" className="text-sm text-gray-700 hover:text-indigo-600">Home</a>
+          <a href="/events" className="text-sm text-gray-700 hover:text-indigo-600">All Events</a>
+          <a href="/#how" className="text-sm text-gray-700 hover:text-indigo-600">How it works</a>
+          <a href="/#faq" className="text-sm text-gray-700 hover:text-indigo-600">FAQ</a>
+        </nav>
+
+        {userId ? (
+          <div className="flex items-center gap-3">
+            <a
+              href="/dashboard"
+              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Dashboard
+            </a>
+            <form action="/auth/signout" method="post">
+              <button
+                type="submit"
+                className="rounded-lg bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <a
+              href="/auth/login"
+              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Sign in
+            </a>
+            <a
+              href="/auth/signup"
+              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              Sign up
+            </a>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}
+
+
+/* =======================================================
+   Full-bleed hero carousel (Embla + autoplay) — no bg
+   ======================================================= */
+function HeroCarousel({ items, loading }: { items: EventRow[]; loading: boolean }) {
+  return (
+    <section className="relative left-1/2 right-1/2 -mx-[50vw] w-screen">
+      <Carousel slides={items} loading={loading} />
+    </section>
+  );
+}
+
+function Carousel({ slides, loading }: { slides: EventRow[]; loading: boolean }) {
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: slides.length > 1, align: "start" },
+    [Autoplay({ delay: 4000, stopOnInteraction: false })]
+  );
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+
+  const onSelect = React.useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  React.useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", onSelect);
+    onSelect();
+  }, [emblaApi, onSelect]);
+
+  return (
+    <div className="relative">
+      <div className="overflow-hidden" ref={emblaRef}>
+        <div className="flex">
+          {loading && (
+            <div className="min-w-0 flex-[0_0_100%]">
+              <SkeletonSlide />
+            </div>
+          )}
+
+          {!loading && slides.length === 0 && (
+            <div className="min-w-0 flex-[0_0_100%]">
+              <EmptySlide />
+            </div>
+          )}
+
+          {!loading &&
+            slides.map((e) => <Slide key={e.id} event={e} />)}
+        </div>
+      </div>
+
+      {/* Arrows */}
+      {slides.length > 1 && (
+        <>
+          <button
+            aria-label="Previous"
+            onClick={() => emblaApi?.scrollPrev()}
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            aria-label="Next"
+            onClick={() => emblaApi?.scrollNext()}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </>
+      )}
+
+      {/* Dots */}
+      {slides.length > 1 && (
+        <div className="flex items-center justify-center gap-2 py-4">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              aria-label={`Go to slide ${i + 1}`}
+              onClick={() => emblaApi?.scrollTo(i)}
+              className={`h-2.5 w-2.5 rounded-full transition ${
+                i === selectedIndex ? "bg-gray-900" : "bg-gray-300 hover:bg-gray-400"
+              }`}
             />
-            Deploy now
-          </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Slide({ event: e }: { event: EventRow }) {
+  return (
+    <a
+      href={`/events/${e.id}`}
+      className="group relative min-w-0 flex-[0_0_100%]"
+      aria-label={`View ${e.name}`}
+    >
+      {/* Poster */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {e.poster_url ? (
+        <img
+          src={e.poster_url}
+          alt={e.name}
+          className="h-[60vh] w-full object-cover sm:h-[70vh]"
+        />
+      ) : (
+        <div className="h-[60vh] w-full bg-gray-200 sm:h-[70vh]" />
+      )}
+
+      {/* Gradient only over the image for readability */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+      {/* Details on image */}
+      <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 text-white">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">
+            {e.event_date ?? ""}
+            {e.event_time ? ` • ${e.event_time.slice(0, 5)}` : ""}
+          </span>
+          {e.location && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">
+              <MapPin className="h-3.5 w-3.5" />
+              {e.location}
+            </span>
+          )}
+        </div>
+
+        <h3 className="mt-2 text-2xl font-semibold sm:text-3xl">{e.name}</h3>
+
+        {e.description ? (
+          <p className="mt-2 line-clamp-2 max-w-3xl text-sm text-white/90">
+            {e.description}
+          </p>
+        ) : null}
+
+        <div className="mt-3">
+          <span className="inline-flex items-center gap-1 rounded-md bg-white/90 px-2.5 py-1 text-xs font-medium text-gray-800 shadow">
+            <Calendar className="h-3.5 w-3.5" />
+            {e.event_date ?? ""} {e.event_time ? `• ${e.event_time.slice(0, 5)}` : ""}
+          </span>
+          <span className="ml-3 text-xs text-white/80 underline underline-offset-2">
+            View & RSVP
+          </span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+function SkeletonSlide() {
+  return (
+    <div className="relative min-w-0 flex-[0_0_100%]">
+      <div className="h-[60vh] w-full animate-pulse bg-gray-200 sm:h-[70vh]" />
+      <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 text-white">
+        <div className="h-6 w-3/4 animate-pulse rounded bg-white/40" />
+        <div className="mt-3 h-3 w-1/2 animate-pulse rounded bg-white/30" />
+      </div>
+    </div>
+  );
+}
+
+function EmptySlide() {
+  return (
+    <div className="relative min-w-0 flex-[0_0_100%]">
+      <div className="h-[60vh] w-full bg-gray-100 sm:h-[70vh]" />
+      <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-gray-700">
+        <div>
+          <p className="text-sm">No events in the next 7 days.</p>
           <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/events"
+            className="mt-3 inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
-            Read our docs
+            Browse all events
           </a>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
+  );
+}
+
+/* =====================================
+   Teaser grid: show up to 5 event cards
+   ===================================== */
+function EventsTeaser({ items, loading }: { items: EventRow[]; loading: boolean }) {
+  const subset = items.slice(0, 5);
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-10">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Next 7 days</h2>
+        <Link href="/events" className="text-sm text-indigo-600 hover:underline">
+          View more
+        </Link>
+      </div>
+
+      {loading ? (
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <li key={i} className="h-64 animate-pulse rounded-2xl bg-gray-100" />
+          ))}
+        </ul>
+      ) : subset.length === 0 ? (
+        <div className="rounded-xl border bg-white p-10 text-center shadow-sm">
+          <p className="text-sm text-gray-600">No events found in this window.</p>
+        </div>
+      ) : (
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {subset.map((e) => (
+            <li
+              key={e.id}
+              className="group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {e.poster_url ? (
+                <img
+                  src={e.poster_url}
+                  alt={e.name}
+                  className="h-40 w-full object-cover"
+                />
+              ) : (
+                <div className="h-40 w-full bg-gray-100" />
+              )}
+              <div className="space-y-2 p-4">
+                <h3 className="line-clamp-1 text-base font-semibold">{e.name}</h3>
+                {e.description ? (
+                  <p className="line-clamp-2 text-sm text-gray-600">{e.description}</p>
+                ) : null}
+                <p className="text-sm text-gray-700">
+                  {e.event_date ?? ""} {e.event_time ? `• ${e.event_time.slice(0, 5)}` : ""}
+                </p>
+                {e.location ? (
+                  <p className="text-sm text-gray-500">{e.location}</p>
+                ) : null}
+                <div className="pt-1">
+                  <a
+                    href={`/events/${e.id}`}
+                    className="text-sm font-medium text-indigo-600 hover:underline"
+                  >
+                    View & RSVP
+                  </a>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
