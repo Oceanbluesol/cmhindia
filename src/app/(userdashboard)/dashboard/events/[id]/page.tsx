@@ -1,273 +1,245 @@
-// app/(userdashboard)/dashboard/events/[id]/page.tsx
+// app/(userdashboard)/dashboard/events/page.tsx
+import Link from "next/link";
 import { createClient } from "@/lib/supabaseServer";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 
-type Params = { params: { id: string } };
+type EventRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  event_date: string | null;
+  event_time: string | null;
+  location: string | null;
+  poster_url: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+};
 
-// -------- SERVER ACTIONS --------
-async function updateEvent(formData: FormData) {
-  "use server";
+type SearchParams = {
+  q?: string;
+  status?: "all" | "pending" | "approved" | "rejected";
+};
+
+export default async function EventsListPage({
+  // ✅ Next 15: searchParams is a Promise
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const { q = "", status = "all" } = await searchParams;
+
   const supabase = await createClient();
-  const id = formData.get("id") as string;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // fetch existing (for previous poster cleanup)
-  const { data: existing, error: exErr } = await supabase
-    .from("events")
-    .select("poster_url, user_id")
-    .eq("id", id)
-    .single();
-
-  if (exErr) redirect(`/error?m=${encodeURIComponent(exErr.message)}`);
-
-  const updates: any = {
-    name: (formData.get("name") as string) || null,
-    organization_name: (formData.get("organization_name") as string) || null,
-    description: (formData.get("description") as string) || null,
-    event_date: (formData.get("event_date") as string) || null,
-    event_time: (formData.get("event_time") as string) || null,
-    location: (formData.get("location") as string) || null,
-    poster_url: (formData.get("poster_url") as string) || (existing?.poster_url ?? null),
-    registration_fee_type: (formData.get("registration_fee_type") as string) || "free",
-    registration_fee_amount:
-      (formData.get("registration_fee_amount") as string) !== ""
-        ? Number(formData.get("registration_fee_amount"))
-        : null,
-    organiser_name: (formData.get("organiser_name") as string) || null,
-    organiser_phone: (formData.get("organiser_phone") as string) || null,
-    organiser_email: (formData.get("organiser_email") as string) || null,
-  };
-
-  // categories CSV -> text[]
-  const categoryCSV = (formData.get("category") as string) || "";
-  updates.category =
-    categoryCSV
-      .split(",")
-      .map((c) => c.trim())
-      .filter(Boolean) || [];
-
-  // member limit
-  const member_limit_raw = formData.get("member_limit") as string;
-  updates.is_unlimited = !member_limit_raw || Number(member_limit_raw) <= 0;
-  updates.member_limit = updates.is_unlimited ? null : Number(member_limit_raw);
-
-  // Handle new poster (if provided) — use admin client to bypass Storage RLS
-  const posterFile = formData.get("poster") as File | null;
-  if (posterFile && posterFile.size > 0) {
-    const userId = existing?.user_id || "misc";
-    const ext = (posterFile.name.split(".").pop() || "jpg").toLowerCase();
-    const safeExt = ["jpg", "jpeg", "png", "webp", "gif"].includes(ext) ? ext : "jpg";
-    const path = `${userId}/${crypto.randomUUID()}.${safeExt}`;
-
-    const { error: upErr } = await supabaseAdmin
-      .storage
-      .from("event-posters")
-      .upload(path, posterFile, {
-        upsert: false,
-        contentType: posterFile.type || `image/${safeExt}`,
-        cacheControl: "3600",
-      });
-
-    if (upErr) redirect(`/error?m=${encodeURIComponent(upErr.message)}`);
-
-    const { data: pub } = await supabaseAdmin
-      .storage
-      .from("event-posters")
-      .getPublicUrl(path);
-
-    updates.poster_url = pub?.publicUrl ?? updates.poster_url;
-
-    // Optional: delete previous poster if it was in this bucket
-    try {
-      const old = existing?.poster_url as string | null;
-      if (old && old.includes("/object/public/event-posters/")) {
-        const key = old.split("/object/public/event-posters/")[1]; // path after bucket
-        if (key) await supabaseAdmin.storage.from("event-posters").remove([key]);
-      }
-    } catch {}
-  }
-
-  const { error } = await supabase.from("events").update(updates).eq("id", id);
-  if (error) redirect(`/error?m=${encodeURIComponent(error.message)}`);
-
-  revalidatePath("/dashboard/events");
-  redirect("/dashboard/events");
-}
-
-async function deleteEvent(formData: FormData) {
-  "use server";
-  const supabase = await createClient();
-  const id = formData.get("id") as string;
-
-  const { error } = await supabase.from("events").delete().eq("id", id);
-  if (error) redirect(`/error?m=${encodeURIComponent(error.message)}`);
-
-  revalidatePath("/dashboard/events");
-  redirect("/dashboard/events");
-}
-
-// -------- PAGE --------
-export default async function EditEventPage({ params }: Params) {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase.from("events").select("*").eq("id", params.id).single();
-  if (error || !data) {
+  if (!user) {
     return (
       <div className="rounded-xl border bg-white p-8 text-center shadow-sm">
-        <h2 className="text-lg font-semibold">Event not found</h2>
-        <a href="/dashboard/events" className="mt-3 inline-block text-sm text-indigo-600 hover:underline">
-          Back to My Events
+        <h2 className="text-lg font-semibold">Please sign in</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          You need to be logged in to manage your events.
+        </p>
+        <a
+          href="/auth/login"
+          className="mt-4 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          Go to Login
         </a>
       </div>
     );
   }
 
-  const e = data as any;
+  let query = supabase
+    .from("events")
+    .select(
+      "id,name,description,event_date,event_time,location,poster_url,status,created_at"
+    )
+    .eq("user_id", user.id);
+
+  if (status !== "all") {
+    query = query.eq("status", status);
+  }
+
+  if (q.trim()) {
+    const like = `%${q.trim()}%`;
+    query = query.or(
+      `name.ilike.${like},description.ilike.${like},location.ilike.${like}`
+    );
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
+
+  if (error) {
+    return (
+      <div className="rounded-xl border bg-white p-8 text-center shadow-sm">
+        <h2 className="text-lg font-semibold">Something went wrong</h2>
+        <p className="mt-1 text-sm text-gray-600">{error.message}</p>
+      </div>
+    );
+  }
+
+  const events = (data as EventRow[]) ?? [];
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Edit Event</h1>
-        <a href="/dashboard/events" className="text-sm text-gray-600 hover:text-indigo-600">← Back</a>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">My Events</h1>
+          <p className="text-sm text-gray-600">Create, filter, and track status.</p>
+        </div>
+        <Link
+          href="/dashboard/events/new"
+          className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          + New Event
+        </Link>
       </div>
 
-      <Card className="border-0 shadow-sm">
-        {/* UPDATE FORM (do NOT set encType/method; server actions handle it) */}
-        <form action={updateEvent} className="space-y-6 p-6">
-          <input type="hidden" name="id" value={e.id} />
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="name" label="Event Name" defaultValue={e.name} required />
-            <Field id="organization_name" label="Organization" defaultValue={e.organization_name ?? ""} />
-          </div>
-
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              rows={4}
-              defaultValue={e.description ?? ""}
-              className="mt-1"
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="event_date" label="Date" type="date" defaultValue={e.event_date ?? ""} />
-            <Field id="event_time" label="Time" type="time" defaultValue={e.event_time ?? ""} />
-          </div>
-
-          <Field id="location" label="Location" defaultValue={e.location ?? ""} />
-
-          {/* Categories CSV */}
-          <Field
-            id="category"
-            label="Categories (comma separated)"
-            defaultValue={(e.category ?? []).join(", ")}
-            placeholder="tech, meetup"
+      {/* Filters (GET form) */}
+      <form
+        action="/dashboard/events"
+        method="get"
+        className="flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm sm:flex-row sm:items-end"
+      >
+        <div className="flex-1">
+          <label htmlFor="q" className="block text-xs font-medium text-gray-600">
+            Search
+          </label>
+          <input
+            id="q"
+            name="q"
+            type="text"
+            defaultValue={q}
+            placeholder="Search by name, description, or location"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
           />
+        </div>
+        <div className="w-full sm:w-56">
+          <label htmlFor="status" className="block text-xs font-medium text-gray-600">
+            Status
+          </label>
+          <select
+            id="status"
+            name="status"
+            defaultValue={status}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          >
+            <option value="all">All</option>
+            <option value="approved">Approved</option>
+            <option value="pending">Pending</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            Apply
+          </button>
+          <Link
+            href="/dashboard/events"
+            className="rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Clear
+          </Link>
+        </div>
+      </form>
 
-          {/* Poster controls */}
-          <Field id="poster_url" label="Poster URL (optional)" defaultValue={e.poster_url ?? ""} />
-          <div>
-            <Label htmlFor="poster">Upload New Poster (optional)</Label>
-            <Input id="poster" name="poster" type="file" accept="image/*" className="mt-1" />
-            <p className="mt-1 text-xs text-gray-500">Uploading a file replaces the current poster.</p>
-          </div>
+      {/* Results */}
+      {events.length === 0 ? (
+        <div className="rounded-xl border bg-white p-10 text-center shadow-sm">
+          <h3 className="text-lg font-semibold">No events found</h3>
+          <p className="mx-auto mt-1 max-w-md text-sm text-gray-600">
+            Try adjusting your filters or create a new event.
+          </p>
+          <a
+            href="/dashboard/events/new"
+            className="mt-5 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          >
+            Create Event
+          </a>
+        </div>
+      ) : (
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {events.map((e) => (
+            <li
+              key={e.id}
+              className="group relative overflow-hidden rounded-xl border bg-white shadow-sm transition hover:shadow-md"
+            >
+              <Link href={`/dashboard/events/${e.id}/details`} aria-label={`View ${e.name}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {e.poster_url ? (
+                  <img src={e.poster_url} alt={e.name} className="h-40 w-full object-cover" />
+                ) : (
+                  <div className="h-40 w-full bg-gray-100" />
+                )}
+              </Link>
 
-          {/* Registration */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="registration_fee_type">Registration Type</Label>
-              <select
-                id="registration_fee_type"
-                name="registration_fee_type"
-                defaultValue={e.registration_fee_type ?? "free"}
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-              >
-                <option value="free">Free</option>
-                <option value="paid">Paid</option>
-              </select>
-            </div>
-            <Field
-              id="registration_fee_amount"
-              label="Fee Amount (if paid)"
-              type="number"
-              min="0"
-              step="0.01"
-              defaultValue={e.registration_fee_amount ?? ""}
-            />
-          </div>
+              <div className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <Link
+                    href={`/dashboard/events/${e.id}/details`}
+                    className="line-clamp-1 text-base font-semibold hover:underline"
+                  >
+                    {e.name}
+                  </Link>
+                  <StatusBadge status={e.status} />
+                </div>
 
-          <Field
-            id="member_limit"
-            label="Max Attendees (leave blank = unlimited)"
-            type="number"
-            min="0"
-            defaultValue={e.member_limit ?? ""}
-          />
+                {e.description ? (
+                  <p className="line-clamp-2 text-sm text-gray-600">{e.description}</p>
+                ) : null}
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <Field id="organiser_name" label="Organizer Name" defaultValue={e.organiser_name ?? ""} />
-            <Field id="organiser_email" label="Organizer Email" type="email" defaultValue={e.organiser_email ?? ""} />
-            <Field id="organiser_phone" label="Organizer Phone" defaultValue={e.organiser_phone ?? ""} />
-          </div>
+                <div className="grid gap-1 text-sm text-gray-700">
+                  {e.event_date ? (
+                    <p>
+                      <span className="font-medium">Date:</span> {e.event_date}
+                      {e.event_time ? ` • ${e.event_time}` : ""}
+                    </p>
+                  ) : null}
+                  {e.location ? (
+                    <p>
+                      <span className="font-medium">Location:</span> {e.location}
+                    </p>
+                  ) : null}
+                </div>
 
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600">
-              {e.poster_url ? (
-                <a href={e.poster_url} target="_blank" className="underline">
-                  Current poster
-                </a>
-              ) : (
-                "No poster"
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
-                Save Changes
-              </Button>
-            </div>
-          </div>
-        </form>
-      </Card>
-
-      {/* DELETE FORM — separate (avoid nested forms) */}
-      <div className="mt-4 flex justify-end">
-        <form action={deleteEvent}>
-          <input type="hidden" name="id" value={e.id} />
-          <Button type="submit" className="bg-red-500 hover:bg-red-600">
-            Delete
-          </Button>
-        </form>
-      </div>
+                <div className="flex items-center justify-between pt-2">
+                  <Link
+                    href={`/dashboard/events/${e.id}`}
+                    className="text-sm font-medium text-indigo-600 hover:underline"
+                  >
+                    Edit
+                  </Link>
+                  <a
+                    href={`/events/${e.id}`}
+                    className="text-sm text-gray-600 hover:underline"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View public
+                  </a>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
-// ---- tiny field helpers using shadcn UI ----
-function Field(
-  { id, label, type = "text", required = false, defaultValue, ...rest }:
-  React.InputHTMLAttributes<HTMLInputElement> & { id: string; label: string }
-) {
+function StatusBadge({ status }: { status: "pending" | "approved" | "rejected" }) {
+  const styles =
+    status === "approved"
+      ? "bg-green-100 text-green-700"
+      : status === "pending"
+      ? "bg-amber-100 text-amber-700"
+      : "bg-red-100 text-red-700";
   return (
-    <div>
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        name={id}
-        type={type}
-        required={required}
-        defaultValue={defaultValue as any}
-        className="mt-1"
-        {...rest}
-      />
-    </div>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${styles}`}>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
   );
 }

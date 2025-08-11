@@ -1,8 +1,8 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
+// app/(userdashboard)/dashboard/events/page.tsx
 import Link from "next/link";
 import { createClient } from "@/lib/supabaseServer";
+
+export const dynamic = "force-dynamic";
 
 type EventRow = {
   id: string;
@@ -16,14 +16,16 @@ type EventRow = {
   created_at: string;
 };
 
-type PageProps = {
-  searchParams?: {
-    q?: string;
-    status?: "all" | "pending" | "approved" | "rejected";
-  };
-};
+export default async function EventsListPage({
+  // ✅ Next 15: searchParams is a Promise
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim();
+  const status = (sp.status as "all" | "pending" | "approved" | "rejected" | undefined) ?? "all";
 
-export default async function EventsListPage({ searchParams }: PageProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -33,9 +35,7 @@ export default async function EventsListPage({ searchParams }: PageProps) {
     return (
       <div className="rounded-xl border bg-white p-8 text-center shadow-sm">
         <h2 className="text-lg font-semibold">Please sign in</h2>
-        <p className="mt-1 text-sm text-gray-600">
-          You need to be logged in to manage your events.
-        </p>
+        <p className="mt-1 text-sm text-gray-600">You need to be logged in to manage your events.</p>
         <a
           href="/auth/login"
           className="mt-4 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
@@ -46,38 +46,19 @@ export default async function EventsListPage({ searchParams }: PageProps) {
     );
   }
 
-  const qRaw = (searchParams?.q ?? "").trim();
-  const statusRaw = (searchParams?.status ?? "all") as
-    | "all"
-    | "pending"
-    | "approved"
-    | "rejected";
-
-  // sanitize to avoid PostgREST or(...) parse issues
-  const q = qRaw.replace(/[(),%]/g, "");
-  const like = q ? `%${q}%` : "";
-
   let query = supabase
     .from("events")
-    .select(
-      "id,name,description,event_date,event_time,location,poster_url,status,created_at"
-    )
+    .select("id,name,description,event_date,event_time,location,poster_url,status,created_at")
     .eq("user_id", user.id);
 
-  if (statusRaw !== "all") {
-    query = query.eq("status", statusRaw);
-  }
+  if (status !== "all") query = query.eq("status", status);
   if (q) {
-    query = query.or(
-      [
-        `name.ilike.${like}`,
-        `description.ilike.${like}`,
-        `location.ilike.${like}`,
-      ].join(",")
-    );
+    const like = `%${q}%`;
+    query = query.or(`name.ilike.${like},description.ilike.${like},location.ilike.${like}`);
   }
 
   const { data, error } = await query.order("created_at", { ascending: false });
+
   if (error) {
     return (
       <div className="rounded-xl border bg-white p-8 text-center shadow-sm">
@@ -88,20 +69,13 @@ export default async function EventsListPage({ searchParams }: PageProps) {
   }
 
   const events = (data as EventRow[]) ?? [];
-  const tabs: Array<{ label: string; value: "all" | "approved" | "pending" | "rejected" }> = [
-    { label: "All", value: "all" },
-    { label: "Approved", value: "approved" },
-    { label: "Pending", value: "pending" },
-    { label: "Rejected", value: "rejected" },
-  ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">My Events</h1>
-          <p className="text-sm text-gray-600">Create, filter, and track approval status.</p>
+          <p className="text-sm text-gray-600">Create, filter, and track status.</p>
         </div>
         <Link
           href="/dashboard/events/new"
@@ -111,61 +85,47 @@ export default async function EventsListPage({ searchParams }: PageProps) {
         </Link>
       </div>
 
-      {/* Filters */}
-      <div className="rounded-xl border bg-white p-4 shadow-sm">
-        {/* status tabs */}
-        <div className="flex flex-wrap gap-2">
-          {tabs.map((t) => {
-            const active = statusRaw === t.value;
-            const href = `/dashboard/events?status=${t.value}${
-              qRaw ? `&q=${encodeURIComponent(qRaw)}` : ""
-            }`;
-            return (
-              <Link
-                key={t.value}
-                href={href}
-                className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium ${
-                  active
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                {t.label}
-              </Link>
-            );
-          })}
+      {/* Filters (GET form) */}
+      <form
+        action="/dashboard/events"
+        method="get"
+        className="flex flex-col gap-3 rounded-xl border bg-white p-4 shadow-sm sm:flex-row sm:items-end"
+      >
+        <div className="flex-1">
+          <label htmlFor="q" className="block text-xs font-medium text-gray-600">
+            Search
+          </label>
+          <input
+            id="q"
+            name="q"
+            type="text"
+            defaultValue={q}
+            placeholder="Search by name, description, or location"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          />
         </div>
-
-        {/* search bar */}
-        <form method="get" className="mt-4 flex gap-3">
-          <input type="hidden" name="status" value={statusRaw} />
-          <div className="relative flex-1">
-            <input
-              id="q"
-              name="q"
-              type="text"
-              defaultValue={qRaw}
-              placeholder="Search by name, description, or location"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 pl-10 text-sm focus:border-indigo-500 focus:outline-none"
-            />
-            {/* magnifier */}
-            <svg
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="M20 20l-3.5-3.5" />
-            </svg>
-          </div>
+        <div className="w-full sm:w-56">
+          <label htmlFor="status" className="block text-xs font-medium text-gray-600">
+            Status
+          </label>
+          <select
+            id="status"
+            name="status"
+            defaultValue={status}
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          >
+            <option value="all">All</option>
+            <option value="approved">Approved</option>
+            <option value="pending">Pending</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div className="flex gap-3">
           <button
             type="submit"
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
-            Search
+            Apply
           </button>
           <Link
             href="/dashboard/events"
@@ -173,8 +133,8 @@ export default async function EventsListPage({ searchParams }: PageProps) {
           >
             Clear
           </Link>
-        </form>
-      </div>
+        </div>
+      </form>
 
       {/* Results */}
       {events.length === 0 ? (
@@ -197,7 +157,6 @@ export default async function EventsListPage({ searchParams }: PageProps) {
               key={e.id}
               className="group relative overflow-hidden rounded-xl border bg-white shadow-sm transition hover:shadow-md"
             >
-              {/* Click image -> details page */}
               <Link href={`/dashboard/events/${e.id}/details`} aria-label={`View ${e.name}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {e.poster_url ? (

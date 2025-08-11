@@ -1,3 +1,4 @@
+// app/events/page.tsx
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -17,19 +18,20 @@ type EventRow = {
 };
 
 export default async function EventsPage({
+  // ✅ Next 15: searchParams is a Promise
   searchParams,
 }: {
-  searchParams?: { q?: string };
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const sp = await searchParams;
+  const q = (Array.isArray(sp.q) ? sp.q[0] : sp.q)?.trim() ?? "";
+
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
-  const q = (searchParams?.q ?? "").trim();
 
   let query = supabase
     .from("events")
-    .select(
-      "id,name,description,event_date,event_time,location,poster_url"
-    )
+    .select("id,name,description,event_date,event_time,location,poster_url")
     .eq("status", "approved")
     .gte("event_date", today);
 
@@ -51,10 +53,7 @@ export default async function EventsPage({
         </Link>
         <div className="flex justify-center items-center text-center sm:text-left">
           <h1 className="text-2xl font-semibold">All Upcoming Events</h1>
-         
         </div>
-
-        
       </div>
 
       {/* Search */}
@@ -103,12 +102,12 @@ export default async function EventsPage({
                   <h3 className="line-clamp-1 text-base font-semibold">
                     {e.name}
                   </h3>
-                  <a
+                  <Link
                     href={`/events/${e.id}`}
                     className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100"
                   >
                     RSVP
-                  </a>
+                  </Link>
                 </div>
 
                 {e.description ? (

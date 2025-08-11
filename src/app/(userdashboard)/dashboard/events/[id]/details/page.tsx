@@ -1,47 +1,42 @@
-import Link from "next/link";
+// app/(userdashboard)/dashboard/events/[id]/details/page.tsx
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabaseServer";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 
-type Params = { params: { id: string } };
+type PageParams = { id: string };
 
-export default async function EventDetailsPage({ params }: Params) {
+export default async function UserEventDetailsPage({
+  // ✅ Next 15: params is a Promise you must await
+  params,
+}: {
+  params: Promise<PageParams>;
+}) {
+  const { id } = await params;
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return (
-      <div className="rounded-xl border bg-white p-8 text-center shadow-sm">
-        <h2 className="text-lg font-semibold">Please sign in</h2>
-        <a
-          href="/auth/login"
-          className="mt-4 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          Go to Login
-        </a>
-      </div>
-    );
-  }
+  if (!user) redirect("/auth/login");
 
+  // Only allow the owner to view their event details in dashboard
   const { data, error } = await supabase
     .from("events")
-    .select(
-      "id, user_id, name, organization_name, description, event_date, event_time, location, category, poster_url, registration_fee_type, registration_fee_amount, member_limit, is_unlimited, organiser_name, organiser_phone, organiser_email, status, created_at"
-    )
-    .eq("id", params.id)
-    .eq("user_id", user.id) // ensure it belongs to the user
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", user.id)
     .single();
 
   if (error || !data) {
     return (
-      <div className="rounded-xl border bg-white p-8 text-center shadow-sm">
+      <div className="rounded-xl border bg-white p-10 text-center shadow-sm">
         <h2 className="text-lg font-semibold">Event not found</h2>
-        <Link href="/dashboard/events" className="mt-3 inline-block text-sm text-indigo-600 hover:underline">
-          Back to My Events
-        </Link>
+        <a
+          href="/dashboard/events"
+          className="mt-3 inline-block text-sm text-indigo-600 hover:underline"
+        >
+          ← Back to My Events
+        </a>
       </div>
     );
   }
@@ -49,129 +44,92 @@ export default async function EventDetailsPage({ params }: Params) {
   const e = data as any;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      {/* Top bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">{e.name}</h1>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-            {e.organization_name ? <span>by <span className="font-medium">{e.organization_name}</span></span> : null}
-            <StatusBadge status={e.status} />
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/dashboard/events/${e.id}`} className="inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50">
-            Edit Event
-          </Link>
-          <a href={`/events/${e.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-            View public
-          </a>
+    <div className="grid gap-6 lg:grid-cols-3">
+      {/* Poster */}
+      <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {e.poster_url ? (
+          <img
+            src={e.poster_url}
+            alt={e.name}
+            className="h-72 w-full cursor-pointer object-cover sm:h-80"
+            onClick={() => window.open(e.poster_url as string, "_blank")}
+          />
+        ) : (
+          <div className="h-72 w-full bg-gray-100 sm:h-80" />
+        )}
+        <div className="p-4 text-sm text-gray-700">
+          <p>
+            {e.event_date ?? ""} {e.event_time ? `• ${e.event_time}` : ""}
+          </p>
+          {e.location && <p>{e.location}</p>}
+          <p className="mt-1">
+            {e.registration_fee_type === "paid" && e.registration_fee_amount ? (
+              <span className="font-medium text-gray-900">
+                Fee: ${Number(e.registration_fee_amount).toFixed(2)}
+              </span>
+            ) : (
+              <span className="font-medium text-green-600">Free</span>
+            )}
+          </p>
         </div>
       </div>
 
-      {/* Poster + quick meta */}
-      <Card className="overflow-hidden border-0 shadow-sm">
-        <div className="grid gap-0 sm:grid-cols-2">
-          <div className="bg-black/5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {e.poster_url ? (
-              <a href={`/dashboard/events/${e.id}/poster`} aria-label="Open full poster">
-                <img src={e.poster_url} alt={e.name} className="h-full w-full max-h-[420px] object-cover" />
-              </a>
-            ) : (
-              <div className="flex h-full min-h-[260px] w-full items-center justify-center bg-gray-100 text-sm text-gray-500">
-                No poster
-              </div>
-            )}
+      {/* Details */}
+      <div className="lg:col-span-2 space-y-6">
+        <div className="rounded-xl border bg-white p-6 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl font-semibold">{e.name}</h1>
+            <StatusBadge status={e.status} />
           </div>
-          <div className="p-5">
-            <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-gray-500">Date</dt>
-                <dd className="font-medium">{e.event_date || "—"}</dd>
-              </div>
-              <div>
-                <dt className="text-gray-500">Time</dt>
-                <dd className="font-medium">{e.event_time || "—"}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-gray-500">Location</dt>
-                <dd className="font-medium">{e.location || "—"}</dd>
-              </div>
+          {e.organization_name ? (
+            <p className="mt-1 text-sm text-gray-600">{e.organization_name}</p>
+          ) : null}
 
-              <div>
-                <dt className="text-gray-500">Registration</dt>
-                <dd className="font-medium capitalize">
-                  {e.registration_fee_type}
-                  {e.registration_fee_type === "paid" && e.registration_fee_amount != null
-                    ? ` • $${Number(e.registration_fee_amount).toFixed(2)}`
-                    : ""}
-                </dd>
-              </div>
+          {Array.isArray(e.category) && e.category.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {e.category.map((c: string) => (
+                <span
+                  key={c}
+                  className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          ) : null}
 
-              <div>
-                <dt className="text-gray-500">Capacity</dt>
-                <dd className="font-medium">
-                  {e.is_unlimited ? "Unlimited" : e.member_limit ?? "—"}
-                </dd>
-              </div>
-
-              <div className="sm:col-span-2">
-                <dt className="text-gray-500">Categories</dt>
-                <dd className="mt-1 flex flex-wrap gap-1">
-                  {(e.category ?? []).length ? (
-                    (e.category as string[]).map((c: string) => (
-                      <Badge key={c} variant="secondary" className="capitalize">
-                        {c}
-                      </Badge>
-                    ))
-                  ) : (
-                    <span className="text-gray-500">—</span>
-                  )}
-                </dd>
-              </div>
-            </dl>
-          </div>
+          {e.description ? (
+            <p className="mt-4 whitespace-pre-line text-sm text-gray-700">
+              {e.description}
+            </p>
+          ) : null}
         </div>
-      </Card>
 
-      {/* Description */}
-      <Card className="border-0 p-5 shadow-sm">
-        <h2 className="mb-2 text-base font-semibold">Description</h2>
-        <p className="whitespace-pre-wrap text-sm text-gray-800">
-          {e.description || "—"}
-        </p>
-      </Card>
+        {/* Organizer */}
+        {(e.organiser_name || e.organiser_email || e.organiser_phone) && (
+          <div className="rounded-xl border bg-white p-6 shadow-sm">
+            <h3 className="text-base font-semibold">Organizer</h3>
+            <div className="mt-2 grid gap-1 text-sm text-gray-700">
+              {e.organiser_name && <p>Name: {e.organiser_name}</p>}
+              {e.organiser_email && <p>Email: {e.organiser_email}</p>}
+              {e.organiser_phone && <p>Phone: {e.organiser_phone}</p>}
+            </div>
+          </div>
+        )}
 
-      {/* Organiser */}
-      <Card className="border-0 p-5 shadow-sm">
-        <h2 className="mb-2 text-base font-semibold">Organizer</h2>
-        <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
-          <div>
-            <dt className="text-gray-500">Name</dt>
-            <dd className="font-medium">{e.organiser_name || "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">Email</dt>
-            <dd className="font-medium">{e.organiser_email || "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-gray-500">Phone</dt>
-            <dd className="font-medium">{e.organiser_phone || "—"}</dd>
-          </div>
-        </dl>
-      </Card>
-
-      <div className="flex justify-between">
-        <div className="text-xs text-gray-500">
-          Created: {e.created_at?.slice(0, 19)?.replace("T", " ") ?? "—"}
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/dashboard/events/${e.id}`} className="inline-flex items-center rounded-lg border px-3 py-2 text-sm font-medium hover:bg-gray-50">
+        <div className="flex items-center justify-between">
+          <a
+            href="/dashboard/events"
+            className="text-sm text-gray-600 hover:text-indigo-600"
+          >
+            ← Back to My Events
+          </a>
+          <a
+            href={`/dashboard/events/${e.id}`}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          >
             Edit Event
-          </Link>
-          <a href={`/events/${e.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-            View public
           </a>
         </div>
       </div>
