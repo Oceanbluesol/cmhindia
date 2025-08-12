@@ -14,9 +14,9 @@ export default function FAQ() {
       <div className="rounded-xl border bg-white p-4 shadow-sm">
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="q1">
-            <AccordionTrigger>Do I need an account to RSVP?</AccordionTrigger>
+            <AccordionTrigger>What is this site about?</AccordionTrigger>
             <AccordionContent>
-              Nope! Anyone can RSVP from the public event page—no sign-in required.
+              This site is a community-driven platform to share and discover events.
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="q2">

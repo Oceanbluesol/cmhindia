@@ -10,7 +10,7 @@ export default function SiteFooter() {
             <img src="/logo.svg" alt="EventHub logo" className="h-8 w-48" />
           </div>
           <p className="text-sm text-gray-600">
-            Discover and RSVP to the best events around you.
+            Discover the best events around you.
           </p>
         </div>
 

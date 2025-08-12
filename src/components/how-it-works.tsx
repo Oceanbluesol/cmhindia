@@ -18,8 +18,8 @@ export default function HowItWorks({ isAuthed }: { isAuthed: boolean }) {
       <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Step
           icon={<MousePointerClick className="h-5 w-5" />}
-          title="Browse & RSVP"
-          desc="See upcoming events and RSVP instantly—no account required."
+          title="Browse"
+          desc="See upcoming events instantly."
         />
         <Step
           icon={<UserPlus className="h-5 w-5" />}

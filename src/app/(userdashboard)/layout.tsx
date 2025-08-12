@@ -39,10 +39,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
             <a href="/dashboard/events" className="text-sm text-gray-700 hover:text-indigo-600">
               My Events
             </a>
-            <a href="/dashboard/rsvps" className="text-sm text-gray-700 hover:text-indigo-600">
+           {/* <a href="/dashboard/rsvps" className="text-sm text-gray-700 hover:text-indigo-600">
               RSVPs
             </a>
-           
+           */}
           </nav>
 
           {/* User profile dropdown */}

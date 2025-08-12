@@ -9,6 +9,7 @@ import { Calendar, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import HowItWorks from "@/components/how-it-works";
 import FAQ from "@/components/faq";
 import Footer from "@/components/footer";
+import { Button } from "@/components/ui/button";
 
 type EventRow = {
   id: string;
@@ -81,6 +82,9 @@ export default function LandingPage() {
       {/* Teaser: show up to 5 cards + View more */}
       <EventsTeaser items={events7d} loading={loading} />
 
+      {/* NEW: Partners/Sponsors */}
+      <PartnersSection />
+
       {/* How it works & FAQ */}
       <main className="mx-auto max-w-6xl px-4 pb-12 space-y-14">
         <HowItWorks isAuthed={!!userId} />
@@ -93,7 +97,7 @@ export default function LandingPage() {
 }
 
 /* =========================
-   Header & Footer (simple)
+   Header (simple)
    ========================= */
 function SiteHeader({ userId }: { userId: string | null }) {
   return (
@@ -148,7 +152,6 @@ function SiteHeader({ userId }: { userId: string | null }) {
   );
 }
 
-
 /* =======================================================
    Full-bleed hero carousel (Embla + autoplay) — no bg
    ======================================================= */
@@ -194,8 +197,7 @@ function Carousel({ slides, loading }: { slides: EventRow[]; loading: boolean })
             </div>
           )}
 
-          {!loading &&
-            slides.map((e) => <Slide key={e.id} event={e} />)}
+          {!loading && slides.map((e) => <Slide key={e.id} event={e} />)}
         </div>
       </div>
 
@@ -284,13 +286,13 @@ function Slide({ event: e }: { event: EventRow }) {
         ) : null}
 
         <div className="mt-3">
-          <span className="inline-flex items-center gap-1 rounded-md bg-white/90 px-2.5 py-1 text-xs font-medium text-gray-800 shadow">
+          <span className="inline-flex items-center gap-1 rounded-md bg-white/90 px-2.5 py-1 text-xs font-medium text-black shadow">
             <Calendar className="h-3.5 w-3.5" />
             {e.event_date ?? ""} {e.event_time ? `• ${e.event_time.slice(0, 5)}` : ""}
           </span>
-          <span className="ml-3 text-xs text-white/80 underline underline-offset-2">
-            View & RSVP
-          </span>
+          <Button className="ml-3" variant="secondary" size="sm">
+            View
+          </Button>
         </div>
       </div>
     </a>
@@ -386,7 +388,7 @@ function EventsTeaser({ items, loading }: { items: EventRow[]; loading: boolean 
                     href={`/events/${e.id}`}
                     className="text-sm font-medium text-indigo-600 hover:underline"
                   >
-                    View & RSVP
+                    View
                   </a>
                 </div>
               </div>
@@ -394,6 +396,66 @@ function EventsTeaser({ items, loading }: { items: EventRow[]; loading: boolean 
           ))}
         </ul>
       )}
+    </section>
+  );
+}
+
+/* ===========================
+   NEW: Our Partners section
+   =========================== */
+function PartnersSection() {
+  // Swap these with your real sponsors
+  const SPONSORS = [
+    {
+      name: "Oceanblue Solutions",
+      logo: "https://oceanbluecorp.com/images/logo.png",
+      href: "https://oceanbluecorp.com/",
+      tagline: "Sustainability & tech",
+    },
+    {
+      name: "Inytes",
+      logo: "https://cdn.inytes.com/images/brand/inytes-logo.png",
+      href: "https://www.inytes.com/",
+      tagline: "Invitation & events",
+    },
+  ];
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-10">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Our Partners</h2>
+        <p className="text-xs text-gray-500">We’re grateful for their support.</p>
+      </div>
+
+      <ul className=" grid gap-6 sm:grid-cols-2">
+        {SPONSORS.map((s) => (
+          <li
+            key={s.name}
+            className="group flex items-center gap-4 rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={s.logo}
+              alt={`${s.name} logo`}
+              className="h-10 w-auto flex-none transition group-hover:grayscale-0"
+            />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-gray-900">{s.name}</p>
+              {s.tagline ? (
+                <p className="truncate text-sm text-gray-600">{s.tagline}</p>
+              ) : null}
+              <a
+                href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-xs font-medium text-indigo-600 hover:underline"
+              >
+                Visit website
+              </a>
+            </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

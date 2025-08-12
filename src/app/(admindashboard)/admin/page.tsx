@@ -44,7 +44,7 @@ export default async function AdminOverview() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Admin Overview</h1>
-          <p className="text-sm text-gray-600">Approve events and monitor RSVPs.</p>
+          <p className="text-sm text-gray-600">Approve events</p>
         </div>
         <Link
           href="/admin/events"

@@ -102,12 +102,13 @@ export default async function EventsPage({
                   <h3 className="line-clamp-1 text-base font-semibold">
                     {e.name}
                   </h3>
-                  <Link
+                 {/* <Link
                     href={`/events/${e.id}`}
                     className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100"
                   >
                     RSVP
                   </Link>
+                  */}
                 </div>
 
                 {e.description ? (
