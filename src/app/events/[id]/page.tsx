@@ -1,4 +1,5 @@
 // app/events/[id]/page.tsx
+import ShareButton from "@/components/share-button";
 import { createClient } from "@/lib/supabaseServer";
 import { Calendar, Clock, MapPin, Mail, Phone, Tag } from "lucide-react";
 
@@ -46,6 +47,12 @@ export default async function EventDetailPage({
         <a href="/events" className="text-sm text-indigo-600 hover:underline">
           ← Back to All Events
         </a>
+
+         <ShareButton
+                            path={`/events/${e.id}`}
+                            title={e.name}
+                            text={e.description ?? undefined}
+                          />
        
       </div>
 

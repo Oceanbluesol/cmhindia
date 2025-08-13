@@ -5,6 +5,7 @@ export const revalidate = 0;
 import Link from "next/link";
 import { createClient } from "@/lib/supabaseServer";
 import EventsSearch from "@/components/events-search";
+import ShareButton from "@/components/share-button";
 import { Calendar, MapPin } from "lucide-react";
 
 type EventRow = {
@@ -51,7 +52,7 @@ export default async function EventsPage({
         <Link href="/" className="text-sm text-indigo-600 hover:underline">
           ← Back to Home
         </Link>
-        <div className="flex justify-center items-center text-center sm:text-left">
+        <div className="flex items-center justify-center text-center sm:text-left">
           <h1 className="text-2xl font-semibold">All Upcoming Events</h1>
         </div>
       </div>
@@ -102,13 +103,6 @@ export default async function EventsPage({
                   <h3 className="line-clamp-1 text-base font-semibold">
                     {e.name}
                   </h3>
-                 {/* <Link
-                    href={`/events/${e.id}`}
-                    className="rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100"
-                  >
-                    RSVP
-                  </Link>
-                  */}
                 </div>
 
                 {e.description ? (
@@ -135,13 +129,20 @@ export default async function EventsPage({
                   )}
                 </div>
 
-                <div className="pt-1">
+                <div className="flex items-center justify-between pt-1">
                   <Link
                     href={`/events/${e.id}`}
                     className="text-sm font-medium text-indigo-600 hover:underline"
                   >
                     View details
                   </Link>
+
+                  {/* NEW: Share button */}
+                  <ShareButton
+                    path={`/events/${e.id}`}
+                    title={e.name}
+                    text={e.description ?? undefined}
+                  />
                 </div>
               </div>
             </li>

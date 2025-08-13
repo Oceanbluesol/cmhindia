@@ -5,11 +5,12 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabaseClient";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { Calendar, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import HowItWorks from "@/components/how-it-works";
 import FAQ from "@/components/faq";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import ShareButton from "@/components/share-button";
 
 type EventRow = {
   id: string;
@@ -61,28 +62,68 @@ export default function LandingPage() {
     <>
       <SiteHeader userId={userId} />
 
-      {/* Section label above the hero */}
-      <div className="mx-auto max-w-6xl px-4 pt-8 pb-4 overflow-auto">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+      {/* Sponsors + title + browse */}
+      <div className="mx-auto max-w-6xl px-4 pt-8 pb-4">
+        <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-3">
+          {/* Sponsors (left) */}
+          <div className="flex items-center justify-center gap-6 sm:justify-start">
+            <a
+              href="https://www.oceanbluecorp.com/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Oceanblue"
+              className="inline-flex"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://www.oceanbluecorp.com/images/logo.png"
+                alt="Oceanblue"
+                className="h-8 w-auto transition"
+              />
+            </a>
+            <a
+              href="https://www.inytes.com/"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Inytes"
+              className="inline-flex"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://cdn.inytes.com/images/brand/inytes-logo.png"
+                alt="Inytes"
+                className="h-8 w-auto transition"
+              />
+            </a>
+          </div>
+
+          {/* Title (center) */}
+          <h1 className="text-center text-xl font-semibold tracking-tight sm:text-2xl">
             Happening in the next 7 days
           </h1>
-          <Link
-            href="/events"
-            className="rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Browse all
-          </Link>
+
+          {/* Browse (right) */}
+          <div className="flex items-center justify-center sm:justify-end">
+            <Link
+              href="/events"
+              className="rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Browse all
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Full-bleed hero carousel (no background color) */}
+      {/* Full-bleed hero carousel */}
       <HeroCarousel items={events7d} loading={loading} />
 
-      {/* Teaser: show up to 5 cards + View more */}
+      {/* Teaser: up to 5 cards + View more */}
       <EventsTeaser items={events7d} loading={loading} />
 
-      {/* NEW: Partners/Sponsors */}
+      {/* All Upcoming Events (search + load more) */}
+      <AllUpcomingEvents />
+
+      {/* Partners/Sponsors */}
       <PartnersSection />
 
       {/* How it works & FAQ */}
@@ -104,14 +145,24 @@ function SiteHeader({ userId }: { userId: string | null }) {
     <header className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <a href="/" className="flex items-center gap-2">
-          <img src="/logo.svg" alt="EventHub logo" className="h-8 w-48" />
+          {/* swap to your local logo if needed */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="cmh india" className="h-8 w-48" />
         </a>
 
         <nav className="hidden gap-6 md:flex">
-          <a href="/" className="text-sm text-gray-700 hover:text-indigo-600">Home</a>
-          <a href="/events" className="text-sm text-gray-700 hover:text-indigo-600">All Events</a>
-          <a href="/#how" className="text-sm text-gray-700 hover:text-indigo-600">How it works</a>
-          <a href="/#faq" className="text-sm text-gray-700 hover:text-indigo-600">FAQ</a>
+          <a href="/" className="text-sm text-gray-700 hover:text-indigo-600">
+            Home
+          </a>
+          <a href="/events" className="text-sm text-gray-700 hover:text-indigo-600">
+            All Events
+          </a>
+          <a href="/#how" className="text-sm text-gray-700 hover:text-indigo-600">
+            How it works
+          </a>
+          <a href="/#faq" className="text-sm text-gray-700 hover:text-indigo-600">
+            FAQ
+          </a>
         </nav>
 
         {userId ? (
@@ -207,14 +258,14 @@ function Carousel({ slides, loading }: { slides: EventRow[]; loading: boolean })
           <button
             aria-label="Previous"
             onClick={() => emblaApi?.scrollPrev()}
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow backdrop-blur hover:bg-white"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             aria-label="Next"
             onClick={() => emblaApi?.scrollNext()}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow backdrop-blur hover:bg-white"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -247,7 +298,6 @@ function Slide({ event: e }: { event: EventRow }) {
       className="group relative min-w-0 flex-[0_0_100%]"
       aria-label={`View ${e.name}`}
     >
-      {/* Poster */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {e.poster_url ? (
         <img
@@ -280,19 +330,18 @@ function Slide({ event: e }: { event: EventRow }) {
         <h3 className="mt-2 text-2xl font-semibold sm:text-3xl">{e.name}</h3>
 
         {e.description ? (
-          <p className="mt-2 line-clamp-2 max-w-3xl text-sm text-white/90">
-            {e.description}
-          </p>
+          <p className="mt-2 line-clamp-2 max-w-3xl text-sm text-white/90">{e.description}</p>
         ) : null}
 
-        <div className="mt-3">
+        <div className="mt-3 flex items-center gap-3">
           <span className="inline-flex items-center gap-1 rounded-md bg-white/90 px-2.5 py-1 text-xs font-medium text-black shadow">
             <Calendar className="h-3.5 w-3.5" />
             {e.event_date ?? ""} {e.event_time ? `• ${e.event_time.slice(0, 5)}` : ""}
           </span>
-          <Button className="ml-3" variant="secondary" size="sm">
+          <Button className="!bg-white/90 !text-gray-900 hover:bg-white" size="sm">
             View
           </Button>
+          <ShareButton path={`/events/${e.id}`} title={e.name} text={e.description ?? undefined} />
         </div>
       </div>
     </a>
@@ -358,41 +407,7 @@ function EventsTeaser({ items, loading }: { items: EventRow[]; loading: boolean 
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {subset.map((e) => (
-            <li
-              key={e.id}
-              className="group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {e.poster_url ? (
-                <img
-                  src={e.poster_url}
-                  alt={e.name}
-                  className="h-40 w-full object-cover"
-                />
-              ) : (
-                <div className="h-40 w-full bg-gray-100" />
-              )}
-              <div className="space-y-2 p-4">
-                <h3 className="line-clamp-1 text-base font-semibold">{e.name}</h3>
-                {e.description ? (
-                  <p className="line-clamp-2 text-sm text-gray-600">{e.description}</p>
-                ) : null}
-                <p className="text-sm text-gray-700">
-                  {e.event_date ?? ""} {e.event_time ? `• ${e.event_time.slice(0, 5)}` : ""}
-                </p>
-                {e.location ? (
-                  <p className="text-sm text-gray-500">{e.location}</p>
-                ) : null}
-                <div className="pt-1">
-                  <a
-                    href={`/events/${e.id}`}
-                    className="text-sm font-medium text-indigo-600 hover:underline"
-                  >
-                    View
-                  </a>
-                </div>
-              </div>
-            </li>
+            <EventCard key={e.id} e={e} />
           ))}
         </ul>
       )}
@@ -400,16 +415,198 @@ function EventsTeaser({ items, loading }: { items: EventRow[]; loading: boolean 
   );
 }
 
+/* ===========================================
+   All Upcoming Events (client search + paging)
+   =========================================== */
+function AllUpcomingEvents() {
+  const supabase = React.useMemo(() => createClient(), []);
+  const PAGE_SIZE = 12;
+
+  const [q, setQ] = React.useState("");
+  const [typing, setTyping] = React.useState(false);
+  const [page, setPage] = React.useState(0);
+  const [items, setItems] = React.useState<EventRow[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [hasMore, setHasMore] = React.useState(true);
+
+  // Debounce query input
+  React.useEffect(() => {
+    setTyping(true);
+    const t = setTimeout(() => {
+      setTyping(false);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const fetchPage = React.useCallback(
+    async (reset = false) => {
+      if (reset) {
+        setPage(0);
+        setHasMore(true);
+        setItems([]);
+      }
+      const currentPage = reset ? 0 : page;
+      const from = currentPage * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      const today = new Date().toISOString().slice(0, 10);
+      const like = q ? `%${q}%` : "";
+
+      const base = supabase
+        .from("events")
+        .select("id,name,description,event_date,event_time,location,poster_url")
+        .eq("status", "approved")
+        .gte("event_date", today);
+
+      const finalQuery = q
+        ? base.or(`name.ilike.${like},description.ilike.${like},location.ilike.${like}`)
+        : base;
+
+      const { data, error } = await finalQuery
+        .order("event_date", { ascending: true })
+        .range(from, to);
+
+      if (!error) {
+        const newItems = (data as EventRow[]) ?? [];
+        setItems((prev) => (reset ? newItems : [...prev, ...newItems]));
+        setHasMore(newItems.length === PAGE_SIZE);
+        if (!reset) setPage((p) => p + 1);
+      }
+    },
+    [PAGE_SIZE, page, q, supabase]
+  );
+
+  // Initial load & on q change
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      await fetchPage(true);
+      if (mounted) setLoading(false);
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [fetchPage]);
+
+  const showLoading = loading || typing;
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-10">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-semibold">All Upcoming Events</h2>
+
+        <div className="relative w-full sm:w-80">
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by name, description, or location"
+            className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {/* Results meta */}
+      <div className="mb-3 text-xs text-gray-500">
+        {showLoading ? "Loading…" : `Showing ${items.length}${q ? ` for “${q}”` : ""}`}
+      </div>
+
+      {/* Grid */}
+      {showLoading && items.length === 0 ? (
+        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+            <li key={i} className="h-64 animate-pulse rounded-2xl bg-gray-100" />
+          ))}
+        </ul>
+      ) : items.length === 0 ? (
+        <div className="rounded-xl border bg-white p-10 text-center shadow-sm">
+          <p className="text-sm text-gray-600">No upcoming events found.</p>
+        </div>
+      ) : (
+        <>
+          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((e) => (
+              <EventCard key={e.id} e={e} />
+            ))}
+          </ul>
+
+          {/* Load more */}
+          {hasMore && (
+            <div className="mt-6 flex justify-center">
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  setLoadingMore(true);
+                  await fetchPage(false);
+                  setLoadingMore(false);
+                }}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Loading…" : "Load more"}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 /* ===========================
-   NEW: Our Partners section
+   Reusable Event Card
+   =========================== */
+function EventCard({ e }: { e: EventRow }) {
+  return (
+    <li className="group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {e.poster_url ? (
+        <img src={e.poster_url} alt={e.name} className="h-40 w-full object-cover" />
+      ) : (
+        <div className="h-40 w-full bg-gray-100" />
+      )}
+      <div className="space-y-2 p-4">
+        <h3 className="line-clamp-1 text-base font-semibold">{e.name}</h3>
+        {e.description ? (
+          <p className="line-clamp-2 text-sm text-gray-600">{e.description}</p>
+        ) : null}
+        <div className="grid gap-1 text-sm text-gray-700">
+          {(e.event_date || e.event_time) && (
+            <p className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <span>
+                {e.event_date ?? ""} {e.event_time ? `• ${e.event_time.slice(0, 5)}` : ""}
+              </span>
+            </p>
+          )}
+          {e.location ? (
+            <p className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-gray-400" />
+              <span className="line-clamp-1">{e.location}</span>
+            </p>
+          ) : null}
+        </div>
+        <div className="pt-2 flex items-center justify-between">
+          <a href={`/events/${e.id}`} className="text-sm font-medium text-indigo-600 hover:underline">
+            View
+          </a>
+          <ShareButton path={`/events/${e.id}`} title={e.name} text={e.description ?? undefined} />
+        </div>
+      </div>
+    </li>
+  );
+}
+
+/* ===========================
+   Our Partners section
    =========================== */
 function PartnersSection() {
-  // Swap these with your real sponsors
   const SPONSORS = [
     {
       name: "Oceanblue Solutions",
-      logo: "https://oceanbluecorp.com/images/logo.png",
-      href: "https://oceanbluecorp.com/",
+      logo: "https://www.oceanbluecorp.com/images/logo.png",
+      href: "https://www.oceanbluecorp.com/",
       tagline: "Sustainability & tech",
     },
     {
@@ -422,12 +619,12 @@ function PartnersSection() {
 
   return (
     <section className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-semibold">Our Partners</h2>
         <p className="text-xs text-gray-500">We’re grateful for their support.</p>
       </div>
 
-      <ul className=" grid gap-6 sm:grid-cols-2">
+      <ul className="grid gap-6 sm:grid-cols-2">
         {SPONSORS.map((s) => (
           <li
             key={s.name}
@@ -437,13 +634,11 @@ function PartnersSection() {
             <img
               src={s.logo}
               alt={`${s.name} logo`}
-              className="h-10 w-auto flex-none transition group-hover:grayscale-0"
+              className="h-10 w-auto flex-none transition"
             />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-gray-900">{s.name}</p>
-              {s.tagline ? (
-                <p className="truncate text-sm text-gray-600">{s.tagline}</p>
-              ) : null}
+              {s.tagline ? <p className="truncate text-sm text-gray-600">{s.tagline}</p> : null}
               <a
                 href={s.href}
                 target="_blank"
