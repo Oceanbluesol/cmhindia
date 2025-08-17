@@ -4,8 +4,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://www.cmhindia.com/";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://www.cmhindia.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -17,12 +16,11 @@ export const metadata: Metadata = {
     "Find upcoming community events across India and RSVP instantly. Organizers can create events, upload posters, and go live after quick admin approval.",
   keywords: [
     "events",
-    "ohio events",
-    "india events",
-    "community",
-    "meetups",
-    "conferences",
+    "India events",
+    "community meetups",
+    "RSVP online",
     "CMH India",
+    "conference listings",
   ],
   applicationName: "CMH India",
   authors: [{ name: "CMH India" }],
@@ -33,7 +31,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: "website",
-    url: "/",
+    url: siteUrl,
     siteName: "CMH India",
     title: "CMH India — Discover events",
     description:
@@ -50,11 +48,11 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@gagankarthik_mullapudi",     // <- optional
-    creator: "@gagankarthik_mullapudi",  // <- optional
+    site: "@gagankarthik_mullapudi",
+    creator: "@gagankarthik_mullapudi",
     title: "CMH India — Discover events & RSVP fast",
     description:
-      "Find upcoming community events across India and RSVP instantly. Organizers can create events, upload posters, and go live after quick admin approval.",
+      "Find upcoming community events across India and RSVP instantly.",
     images: [`${siteUrl}/og/og-default.jpg`],
   },
   icons: {
@@ -66,7 +64,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
     shortcut: ["/favicon.ico"],
   },
-  manifest: "/site.webmanifest",
+  manifest: "/site.webmanifest", // Make sure this file exists in /public
   category: "Events",
   referrer: "origin-when-cross-origin",
   robots: {
@@ -80,24 +78,21 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0b0b" },
-  ],
-  // Optional: add verification codes when you have them
-  // verification: { google: "GOOGLE_SITE_VERIFICATION_CODE" },
+  // Optional: Uncomment if you add a verification code
+  // verification: {
+  //   google: "GOOGLE_SITE_VERIFICATION_CODE",
+  // },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  themeColor: "#ffffff", // moved from metadata here
   colorScheme: "light",
-  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Basic JSON-LD (Organization + WebSite)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
