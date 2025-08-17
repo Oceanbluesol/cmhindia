@@ -258,14 +258,14 @@ function Carousel({ slides, loading }: { slides: EventRow[]; loading: boolean })
           <button
             aria-label="Previous"
             onClick={() => emblaApi?.scrollPrev()}
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow backdrop-blur hover:bg-white"
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             aria-label="Next"
             onClick={() => emblaApi?.scrollNext()}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow backdrop-blur hover:bg-white"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -295,53 +295,49 @@ function Slide({ event: e }: { event: EventRow }) {
   return (
     <a
       href={`/events/${e.id}`}
-      className="group relative min-w-0 flex-[0_0_100%]"
+      className="group flex min-w-0 flex-[0_0_100%] flex-col overflow-hidden sm:flex-row sm:h-[70vh]"
       aria-label={`View ${e.name}`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {e.poster_url ? (
-        <img
-          src={e.poster_url}
-          alt={e.name}
-          className="h-[60vh] w-full object-cover sm:h-[70vh]"
-        />
-      ) : (
-        <div className="h-[60vh] w-full bg-gray-200 sm:h-[70vh]" />
-      )}
+      {/* Image half */}
+      <div className="w-full sm:w-1/2 h-[40vh] sm:h-full">
+        {e.poster_url ? (
+          <img
+            src={e.poster_url}
+            alt={e.name}
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          <div className="h-full w-full bg-gray-200" />
+        )}
+      </div>
 
-      {/* Gradient only over the image for readability */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-
-      {/* Details on image */}
-      <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 text-white">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">
+      {/* Details half */}
+      <div className="flex w-full flex-col justify-center bg-white px-6 py-8 sm:w-1/2 sm:px-10 sm:py-12">
+        <div className="mb-2 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+          <span className="inline-flex items-center gap-1">
+            <Calendar className="h-4 w-4" />
             {e.event_date ?? ""}
             {e.event_time ? ` • ${e.event_time.slice(0, 5)}` : ""}
           </span>
           {e.location && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">
-              <MapPin className="h-3.5 w-3.5" />
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="h-4 w-4" />
               {e.location}
             </span>
           )}
         </div>
 
-        <h3 className="mt-2 text-2xl font-semibold sm:text-3xl">{e.name}</h3>
+        <h3 className="text-2xl font-semibold text-gray-900 sm:text-3xl">{e.name}</h3>
 
-        {e.description ? (
-          <p className="mt-2 line-clamp-2 max-w-3xl text-sm text-white/90">{e.description}</p>
-        ) : null}
+        {e.description && (
+          <p className="mt-3 line-clamp-3 text-sm text-gray-700">{e.description}</p>
+        )}
 
-        <div className="mt-3 flex items-center gap-3">
-          <span className="inline-flex items-center gap-1 rounded-md bg-white/90 px-2.5 py-1 text-xs font-medium text-black shadow">
-            <Calendar className="h-3.5 w-3.5" />
-            {e.event_date ?? ""} {e.event_time ? `• ${e.event_time.slice(0, 5)}` : ""}
-          </span>
-          <Button className="!bg-white/90 !text-gray-900 hover:bg-white" size="sm">
-            View
+        <div className="mt-6 flex gap-3">
+          <Button asChild>
+            <Link href={`/events/${e.id}`}>View Details</Link>
           </Button>
-          <ShareButton path={`/events/${e.id}`} title={e.name} text={e.description ?? undefined} />
+          <ShareButton path={`/events/${e.id}`} title={e.name} text={e.description ?? ""} />
         </div>
       </div>
     </a>

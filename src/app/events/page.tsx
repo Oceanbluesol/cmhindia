@@ -19,13 +19,13 @@ type EventRow = {
 };
 
 export default async function EventsPage({
-  // ✅ Next 15: searchParams is a Promise
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
   const q = (Array.isArray(sp.q) ? sp.q[0] : sp.q)?.trim() ?? "";
+  const selectedDate = (Array.isArray(sp.date) ? sp.date[0] : sp.date)?.trim() ?? "";
 
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
@@ -33,8 +33,13 @@ export default async function EventsPage({
   let query = supabase
     .from("events")
     .select("id,name,description,event_date,event_time,location,poster_url")
-    .eq("status", "approved")
-    .gte("event_date", today);
+    .eq("status", "approved");
+
+  if (selectedDate) {
+    query = query.eq("event_date", selectedDate);
+  } else {
+    query = query.gte("event_date", today);
+  }
 
   if (q) {
     const like = `%${q}%`;
@@ -58,20 +63,26 @@ export default async function EventsPage({
       </div>
 
       {/* Search */}
-      <EventsSearch initialQuery={q} />
+      <EventsSearch initialQuery={q} initialDate={selectedDate} />
+
 
       {/* Results meta */}
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-500">
-          Showing <span className="font-medium">{events.length}</span>{" "}
-          {events.length === 1 ? "event" : "events"}
-          {q ? (
-            <>
-              {" "}
-              for <span className="font-medium">“{q}”</span>
-            </>
-          ) : null}
-        </p>
+       <p className="text-xs text-gray-500">
+  Showing <span className="font-medium">{events.length}</span>{" "}
+  {events.length === 1 ? "event" : "events"}
+  {q && (
+    <>
+      {" "}for <span className="font-medium">“{q}”</span>
+    </>
+  )}
+  {selectedDate && (
+    <>
+      {" "}on <span className="font-medium">{selectedDate}</span>
+    </>
+  )}
+</p>
+
       </div>
 
       {/* Results */}
