@@ -127,12 +127,12 @@ function SiteHeader({ userId }: { userId: string | null }) {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden gap-8 md:flex">
+        <nav className="hidden gap-8 md:flex justify-center items-center">
           <Link href="/" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">Home</Link>
           <Link href="/events" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">All Events</Link>
           <Link href="/#how" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">How it works</Link>
           <Link href="/#faq" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">FAQ</Link>
-        </nav>
+        
 
         {/* Auth Buttons */}
         {userId ? (
@@ -148,6 +148,7 @@ function SiteHeader({ userId }: { userId: string | null }) {
             <Link href="/auth/signup" className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl">Sign up</Link>
           </div>
         )}
+        </nav>
 
         {/* Mobile menu button */}
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden rounded-lg p-2 text-gray-600 hover:bg-gray-100">
@@ -165,6 +166,10 @@ function SiteHeader({ userId }: { userId: string | null }) {
             <Link href="/events" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">All Events</Link>
             <Link href="/#how" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">How it works</Link>
             <Link href="/#faq" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">FAQ</Link>
+            {/* Auth Links */}
+            <Link href="/auth/login" className="block rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">Sign in</Link>
+            <Link href="/auth/signup" className="block rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl">Sign up</Link>
+
           </div>
         </div>
       )}
@@ -173,7 +178,7 @@ function SiteHeader({ userId }: { userId: string | null }) {
 }
 
 // -----------------------------
-// HERO CAROUSEL — OLD VERSION (kept)
+// HERO CAROUSEL 
 // -----------------------------
 function HeroCarousel({ items, loading }: { items: EventRow[]; loading: boolean }) {
   return (
