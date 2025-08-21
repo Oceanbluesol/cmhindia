@@ -13,7 +13,7 @@ type EventRow = {
   name: string;
   description: string | null;
   event_date: string | null; // YYYY-MM-DD
-  event_time: string | null; // HH:mm or HH:mm:ss
+  event_time: string | null;
   location: string | null;
   poster_url: string | null;
 };
@@ -21,30 +21,21 @@ type EventRow = {
 export default async function EventsPage({
   searchParams,
 }: {
-  // Standard App Router typing (not a Promise)
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const sp = searchParams ?? {};
+  const sp = await searchParams;
   const q = (Array.isArray(sp.q) ? sp.q[0] : sp.q)?.trim() ?? "";
-  const startParam = (Array.isArray(sp.start) ? sp.start[0] : sp.start)?.trim() ?? "";
-  const endParam = (Array.isArray(sp.end) ? sp.end[0] : sp.end)?.trim() ?? "";
-
-  const start = startParam;
-  const end = endParam;
+  const start = (Array.isArray(sp.start) ? sp.start[0] : sp.start)?.trim() ?? "";
+  const end = (Array.isArray(sp.end) ? sp.end[0] : sp.end)?.trim() ?? "";
 
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10);
 
   let query = supabase
     .from("events")
     .select("id,name,description,event_date,event_time,location,poster_url")
     .eq("status", "approved");
 
-  // Date filtering:
-  // - If both start & end provided -> BETWEEN inclusive
-  // - If only start -> >= start
-  // - If only end -> <= end
-  // - If none -> >= today (upcoming)
   if (start && end) {
     query = query.gte("event_date", start).lte("event_date", end);
   } else if (start) {
@@ -65,34 +56,6 @@ export default async function EventsPage({
   const { data } = await query.order("event_date", { ascending: true }).limit(100);
   const events = (data as EventRow[]) ?? [];
 
-  // Helper to render the meta line cleanly
-  const renderMeta = () => {
-    const hasRange = start || end;
-    return (
-      <p className="text-xs text-gray-500">
-        Showing <span className="font-medium">{events.length}</span>{" "}
-        {events.length === 1 ? "event" : "events"}
-        {q && (
-          <>
-            {" "}for <span className="font-medium">“{q}”</span>
-          </>
-        )}
-        {hasRange && (
-          <>
-            {" "}from{" "}
-            <span className="font-medium">{start || "—"}</span> to{" "}
-            <span className="font-medium">{end || "—"}</span>
-          </>
-        )}
-        {!hasRange && (
-          <>
-            {" "}from <span className="font-medium">{today}</span> onward
-          </>
-        )}
-      </p>
-    );
-  };
-
   return (
     <div className="space-y-6 p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -105,23 +68,26 @@ export default async function EventsPage({
       </div>
 
       {/* Search */}
-      <EventsSearch
-        title="Find events"
-        initialQuery={q}
-        initialStart={start}
-        initialEnd={end}
-      />
+      <EventsSearch initialQuery={q} initialStart={start} initialEnd={end} />
 
       {/* Results meta */}
       <div className="flex items-center justify-between">
-        {renderMeta()}
+        <p className="text-xs text-gray-500">
+          Showing <span className="font-medium">{events.length}</span>{" "}
+          {events.length === 1 ? "event" : "events"}
+          {q && <> for <span className="font-medium">“{q}”</span></>}
+          {start && end && <> between <span className="font-medium">{start}</span> and <span className="font-medium">{end}</span></>}
+          {!end && start && <> from <span className="font-medium">{start}</span></>}
+          {!start && end && <> until <span className="font-medium">{end}</span></>}
+          {!start && !end && <> from <span className="font-medium">{today}</span> onward</>}
+        </p>
       </div>
 
       {/* Results */}
       {events.length === 0 ? (
         <div className="rounded-xl border bg-white p-10 text-center shadow-sm">
-          <p className="text-sm text-gray-600">No events found.</p>
-          <p className="mt-1 text-xs text-gray-500">Try a different search or date range.</p>
+          <p className="text-sm text-gray-600">No upcoming events found.</p>
+          <p className="mt-1 text-xs text-gray-500">Try a different search.</p>
         </div>
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -143,15 +109,11 @@ export default async function EventsPage({
 
               <div className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <h3 className="line-clamp-1 text-base font-semibold">
-                    {e.name}
-                  </h3>
+                  <h3 className="line-clamp-1 text-base font-semibold">{e.name}</h3>
                 </div>
 
                 {e.description ? (
-                  <p className="line-clamp-2 text-sm text-gray-600">
-                    {e.description}
-                  </p>
+                  <p className="line-clamp-2 text-sm text-gray-600">{e.description}</p>
                 ) : null}
 
                 <div className="grid gap-1 text-sm text-gray-700">

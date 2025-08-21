@@ -5,13 +5,16 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabaseClient";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { Calendar, MapPin, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Calendar, MapPin, ChevronLeft, ChevronRight, Search, Sparkles, Users } from "lucide-react";
 import HowItWorks from "@/components/how-it-works";
 import FAQ from "@/components/faq";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import ShareButton from "@/components/share-button";
 
+// -----------------------------
+// Types
+// -----------------------------
 type EventRow = {
   id: string;
   name: string;
@@ -22,6 +25,9 @@ type EventRow = {
   poster_url: string | null;
 };
 
+// -----------------------------
+// Page
+// -----------------------------
 export default function LandingPage() {
   const supabase = React.useMemo(() => createClient(), []);
   const [userId, setUserId] = React.useState<string | null>(null);
@@ -43,7 +49,7 @@ export default function LandingPage() {
       endDate.setDate(endDate.getDate() + 7);
       const end = endDate.toISOString().slice(0, 10);
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("events")
         .select("id,name,description,event_date,event_time,location,poster_url")
         .eq("status", "approved")
@@ -53,7 +59,7 @@ export default function LandingPage() {
         .order("event_date", { ascending: true })
         .limit(48);
 
-      if (!error) setEvents7d((data as EventRow[]) ?? []);
+      setEvents7d((data as EventRow[]) ?? []);
       setLoading(false);
     })();
   }, [supabase]);
@@ -62,150 +68,113 @@ export default function LandingPage() {
     <>
       <SiteHeader userId={userId} />
 
-      {/* Sponsors + title + browse */}
+      {/* Modern hero header (keep carousel the same as OLD below) */}
       <div className="mx-auto max-w-6xl px-4 pt-8 pb-4">
-        <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-3">
-          {/* Sponsors (left) */}
-          <div className="flex items-center justify-center gap-6 sm:justify-start">
-            <a
-              href="https://www.oceanbluecorp.com/"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Oceanblue"
-              className="inline-flex"
-            >
+         <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-3">
+           {/* Sponsors (left) */} 
+           <div className="flex items-center justify-center gap-6 sm:justify-start">
+             <a href="https://www.oceanbluecorp.com/" target="_blank" rel="noreferrer" aria-label="Oceanblue" className="inline-flex" >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://www.oceanbluecorp.com/images/logo.png"
-                alt="Oceanblue"
-                className="h-8 w-auto transition"
-              />
-            </a>
-            <a
-              href="https://www.inytes.com/"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Inytes"
-              className="inline-flex"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="https://cdn.inytes.com/images/brand/inytes-logo.png"
-                alt="Inytes"
-                className="h-8 w-auto transition"
-              />
-            </a>
-          </div>
+               <img src="https://www.oceanbluecorp.com/images/logo.png" alt="Oceanblue" className="h-8 w-auto transition" /> </a> 
+               <a href="https://www.inytes.com/" target="_blank" rel="noreferrer" aria-label="Inytes" className="inline-flex" > 
+               {/* eslint-disable-next-line @next/next/no-img-element */} <img src="https://cdn.inytes.com/images/brand/inytes-logo.png" alt="Inytes" className="h-8 w-auto transition" />
+                </a> </div> {/* Title (center) */} 
+                <h1 className="text-center text-xl font-semibold tracking-tight sm:text-2xl"> Happening in the next 7 days </h1>
+                 {/* Browse (right) */} 
+                 <div className="flex items-center justify-center sm:justify-end">
+                   <Link href="/events" className="rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50" > Browse all </Link>
+                    </div> 
+                    </div> 
+                    </div>
 
-          {/* Title (center) */}
-          <h1 className="text-center text-xl font-semibold tracking-tight sm:text-2xl">
-            Happening in the next 7 days
-          </h1>
-
-          {/* Browse (right) */}
-          <div className="flex items-center justify-center sm:justify-end">
-            <Link
-              href="/events"
-              className="rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Browse all
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Full-bleed hero carousel */}
+      {/* FULL-BLEED CAROUSEL — kept EXACT from OLD version */}
       <HeroCarousel items={events7d} loading={loading} />
 
-      {/* Teaser: up to 5 cards + View more */}
+      {/* Featured Events (modernized) */}
       <EventsTeaser items={events7d} loading={loading} />
 
-      {/* All Upcoming Events (search + load more) */}
+      {/* All Upcoming Events (modernized) */}
       <AllUpcomingEvents />
 
-      {/* Partners/Sponsors */}
+      {/* Partners (modernized) */}
       <PartnersSection />
 
       {/* How it works & FAQ */}
-      <main className="mx-auto max-w-6xl px-4 pb-12 space-y-14">
-        <HowItWorks isAuthed={!!userId} />
-        <FAQ />
-      </main>
+      <div className="bg-gray-50">
+        <main className="mx-auto max-w-7xl px-4 py-16 space-y-20">
+          <HowItWorks isAuthed={!!userId} />
+          <FAQ />
+        </main>
+      </div>
 
       <Footer />
     </>
   );
 }
 
-/* =========================
-   Header (simple)
-   ========================= */
+// -----------------------------
+// Header (modernized version)
+// -----------------------------
 function SiteHeader({ userId }: { userId: string | null }) {
-  return (
-    <header className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <a href="/" className="flex items-center gap-2">
-          {/* swap to your local logo if needed */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="cmh india" className="h-8 w-48" />
-        </a>
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
-        <nav className="hidden gap-6 md:flex">
-          <a href="/" className="text-sm text-gray-700 hover:text-indigo-600">
-            Home
-          </a>
-          <a href="/events" className="text-sm text-gray-700 hover:text-indigo-600">
-            All Events
-          </a>
-          <a href="/#how" className="text-sm text-gray-700 hover:text-indigo-600">
-            How it works
-          </a>
-          <a href="/#faq" className="text-sm text-gray-700 hover:text-indigo-600">
-            FAQ
-          </a>
+  return (
+    <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-md shadow-sm">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
+        <Link href="/" className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="cmh india" className="h-8 w-auto sm:w-48" />
+        </Link>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden gap-8 md:flex">
+          <Link href="/" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">Home</Link>
+          <Link href="/events" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">All Events</Link>
+          <Link href="/#how" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">How it works</Link>
+          <Link href="/#faq" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">FAQ</Link>
         </nav>
 
+        {/* Auth Buttons */}
         {userId ? (
           <div className="flex items-center gap-3">
-            <a
-              href="/dashboard"
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Dashboard
-            </a>
+            <Link href="/dashboard" className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">Dashboard</Link>
             <form action="/auth/signout" method="post">
-              <button
-                type="submit"
-                className="rounded-lg bg-red-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-600"
-              >
-                Sign out
-              </button>
+              <button type="submit" className="rounded-full bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition-all">Sign out</button>
             </form>
           </div>
         ) : (
           <div className="flex items-center gap-3">
-            <a
-              href="/auth/login"
-              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Sign in
-            </a>
-            <a
-              href="/auth/signup"
-              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
-            >
-              Sign up
-            </a>
+            <Link href="/auth/login" className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">Sign in</Link>
+            <Link href="/auth/signup" className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl">Sign up</Link>
           </div>
         )}
+
+        {/* Mobile menu button */}
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden rounded-lg p-2 text-gray-600 hover:bg-gray-100">
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
       </div>
+
+      {/* Mobile Navigation */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t bg-white">
+          <div className="space-y-1 px-4 py-4">
+            <Link href="/" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">Home</Link>
+            <Link href="/events" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">All Events</Link>
+            <Link href="/#how" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">How it works</Link>
+            <Link href="/#faq" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">FAQ</Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
 
-/* =======================================================
-   Full-bleed hero carousel (Embla + autoplay) — no bg
-   ======================================================= */
+// -----------------------------
+// HERO CAROUSEL — OLD VERSION (kept)
+// -----------------------------
 function HeroCarousel({ items, loading }: { items: EventRow[]; loading: boolean }) {
   return (
     <section className="relative left-1/2 right-1/2 -mx-[50vw] w-screen">
@@ -295,17 +264,14 @@ function Slide({ event: e }: { event: EventRow }) {
   return (
     <a
       href={`/events/${e.id}`}
-      className="group flex min-w-0 flex-[0_0_100%] flex-col overflow-hidden sm:flex-row sm:h-[70vh]"
+      className="group flex min-w-0 flex-[0_0_100%] flex-col overflow-hidden sm:flex-row sm:h[70vh]"
       aria-label={`View ${e.name}`}
     >
       {/* Image half */}
-      <div className="w-full sm:w-1/2 h-[40vh] sm:h-full">
+      <div className="w-full sm:w-1/2 h-[40vh] sm:h-[70vh]">
         {e.poster_url ? (
-          <img
-            src={e.poster_url}
-            alt={e.name}
-            className="h-full w-full object-contain"
-          />
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={e.poster_url} alt={e.name} className="h-full w-full object-contain" />
         ) : (
           <div className="h-full w-full bg-gray-200" />
         )}
@@ -363,10 +329,7 @@ function EmptySlide() {
       <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-gray-700">
         <div>
           <p className="text-sm">No events in the next 7 days.</p>
-          <a
-            href="/events"
-            className="mt-3 inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
+          <a href="/events" className="mt-3 inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
             Browse all events
           </a>
         </div>
@@ -375,45 +338,52 @@ function EmptySlide() {
   );
 }
 
-/* =====================================
-   Teaser grid: show up to 5 event cards
-   ===================================== */
+// -----------------------------
+// Featured Events (modernized)
+// -----------------------------
 function EventsTeaser({ items, loading }: { items: EventRow[]; loading: boolean }) {
-  const subset = items.slice(0, 5);
+  const subset = items.slice(0, 6);
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Next 7 days</h2>
-        <Link href="/events" className="text-sm text-indigo-600 hover:underline">
-          View more
-        </Link>
+    <section className="mx-auto max-w-7xl px-4 py-16">
+      <div className="mb-12 text-center">
+        <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">Featured Events</h2>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">Don't miss these amazing events happening in the next 7 days</p>
       </div>
 
       {loading ? (
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <li key={i} className="h-64 animate-pulse rounded-2xl bg-gray-100" />
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-80 animate-pulse rounded-3xl bg-gray-200" />
           ))}
-        </ul>
+        </div>
       ) : subset.length === 0 ? (
-        <div className="rounded-xl border bg-white p-10 text-center shadow-sm">
-          <p className="text-sm text-gray-600">No events found in this window.</p>
+        <div className="rounded-3xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">
+          <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Featured Events</h3>
+          <p className="text-gray-600 mb-6">Check out all our upcoming events instead!</p>
+          <Link href="/events" className="inline-flex items-center justify-center rounded-full bg-indigo-600 text-white px-6 py-3 font-semibold hover:bg-indigo-700 transition-all">View All Events</Link>
         </div>
       ) : (
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {subset.map((e) => (
-            <EventCard key={e.id} e={e} />
-          ))}
-        </ul>
+        <>
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {subset.map((e) => (
+              <EventCard key={e.id} e={e} />
+            ))}
+          </div>
+
+          <div className="mt-12 text-center">
+            <Link href="/events" className="inline-flex items-center justify-center rounded-full bg-indigo-600 text-white px-8 py-4 font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">View All Events</Link>
+          </div>
+        </>
       )}
     </section>
   );
 }
 
-/* ===========================================
-   All Upcoming Events (client search + paging)
-   =========================================== */
+// -----------------------------
+// All Upcoming Events (modernized)
+// -----------------------------
 function AllUpcomingEvents() {
   const supabase = React.useMemo(() => createClient(), []);
   const PAGE_SIZE = 12;
@@ -429,9 +399,7 @@ function AllUpcomingEvents() {
   // Debounce query input
   React.useEffect(() => {
     setTyping(true);
-    const t = setTimeout(() => {
-      setTyping(false);
-    }, 350);
+    const t = setTimeout(() => setTyping(false), 350);
     return () => clearTimeout(t);
   }, [q]);
 
@@ -459,16 +427,12 @@ function AllUpcomingEvents() {
         ? base.or(`name.ilike.${like},description.ilike.${like},location.ilike.${like}`)
         : base;
 
-      const { data, error } = await finalQuery
-        .order("event_date", { ascending: true })
-        .range(from, to);
+      const { data } = await finalQuery.order("event_date", { ascending: true }).range(from, to);
 
-      if (!error) {
-        const newItems = (data as EventRow[]) ?? [];
-        setItems((prev) => (reset ? newItems : [...prev, ...newItems]));
-        setHasMore(newItems.length === PAGE_SIZE);
-        if (!reset) setPage((p) => p + 1);
-      }
+      const newItems = (data as EventRow[]) ?? [];
+      setItems((prev) => (reset ? newItems : [...prev, ...newItems]));
+      setHasMore(newItems.length === PAGE_SIZE);
+      if (!reset) setPage((p) => p + 1);
     },
     [PAGE_SIZE, page, q, supabase]
   );
@@ -489,164 +453,196 @@ function AllUpcomingEvents() {
   const showLoading = loading || typing;
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold">All Upcoming Events</h2>
+    <section className="bg-gray-50">
+      <div className="mx-auto max-w-7xl px-4 py-16">
+        <div className="mb-12 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">All Upcoming Events</h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">Discover all the amazing events coming up in your area</p>
 
-        <div className="relative w-full sm:w-80">
-          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search by name, description, or location"
-            className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-          />
+          <div className="relative max-w-xl mx-auto">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search by name, description, or location..."
+              className="w-full rounded-full border-2 border-gray-200 bg-white pl-12 pr-4 py-3 text-sm focus:border-indigo-500 focus:outline-none shadow-sm"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Results meta */}
-      <div className="mb-3 text-xs text-gray-500">
-        {showLoading ? "Loading…" : `Showing ${items.length}${q ? ` for “${q}”` : ""}`}
-      </div>
-
-      {/* Grid */}
-      {showLoading && items.length === 0 ? (
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: PAGE_SIZE }).map((_, i) => (
-            <li key={i} className="h-64 animate-pulse rounded-2xl bg-gray-100" />
-          ))}
-        </ul>
-      ) : items.length === 0 ? (
-        <div className="rounded-xl border bg-white p-10 text-center shadow-sm">
-          <p className="text-sm text-gray-600">No upcoming events found.</p>
+        {/* Results meta */}
+        <div className="mb-8 text-center">
+          <p className="text-sm text-gray-500">{showLoading ? "Searching..." : `Found ${items.length} events${q ? ` for "${q}"` : ""}`}</p>
         </div>
-      ) : (
-        <>
-          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((e) => (
-              <EventCard key={e.id} e={e} />
+
+        {/* Grid */}
+        {showLoading && items.length === 0 ? (
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+              <div key={i} className="h-80 animate-pulse rounded-3xl bg-gray-200" />
             ))}
-          </ul>
-
-          {/* Load more */}
-          {hasMore && (
-            <div className="mt-6 flex justify-center">
-              <Button
-                variant="outline"
-                onClick={async () => {
-                  setLoadingMore(true);
-                  await fetchPage(false);
-                  setLoadingMore(false);
-                }}
-                disabled={loadingMore}
-              >
-                {loadingMore ? "Loading…" : "Load more"}
-              </Button>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="rounded-3xl border-2 border-dashed border-gray-300 bg-white p-12 text-center">
+            <Search className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Events Found</h3>
+            <p className="text-gray-600 mb-6">Try adjusting your search or check back later for new events.</p>
+            <button onClick={() => setQ("")} className="inline-flex items-center justify-center rounded-full bg-indigo-600 text-white px-6 py-3 font-semibold hover:bg-indigo-700 transition-all">
+              Clear Search
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map((e) => (
+                <EventCard key={e.id} e={e} />
+              ))}
             </div>
-          )}
-        </>
-      )}
+
+            {/* Load more */}
+            {hasMore && (
+              <div className="mt-12 text-center">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={async () => {
+                    setLoadingMore(true);
+                    await fetchPage(false);
+                    setLoadingMore(false);
+                  }}
+                  disabled={loadingMore}
+                  className="rounded-full"
+                >
+                  {loadingMore ? "Loading..." : "Load More Events"}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </section>
   );
 }
 
-/* ===========================
-   Reusable Event Card
-   =========================== */
+// -----------------------------
+// Event Card (modernized)
+// -----------------------------
 function EventCard({ e }: { e: EventRow }) {
   return (
-    <li className="group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {e.poster_url ? (
-        <img src={e.poster_url} alt={e.name} className="h-40 w-full object-cover" />
-      ) : (
-        <div className="h-40 w-full bg-gray-100" />
-      )}
-      <div className="space-y-2 p-4">
-        <h3 className="line-clamp-1 text-base font-semibold">{e.name}</h3>
-        {e.description ? (
-          <p className="line-clamp-2 text-sm text-gray-600">{e.description}</p>
-        ) : null}
-        <div className="grid gap-1 text-sm text-gray-700">
+    <div className="group overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+      <div className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {e.poster_url ? (
+          <img src={e.poster_url} alt={e.name} className="h-48 w-full object-cover" />
+        ) : (
+          <div className="h-48 w-full bg-gradient-to-br from-indigo-500 to-purple-600" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+      </div>
+
+      <div className="p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-indigo-600 transition-colors">{e.name}</h3>
+
+        {e.description && <p className="text-sm text-gray-600 mb-4 line-clamp-2">{e.description}</p>}
+
+        <div className="space-y-2 mb-6">
           {(e.event_date || e.event_time) && (
-            <p className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-400" />
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Calendar className="h-4 w-4 text-indigo-500" />
               <span>
-                {e.event_date ?? ""} {e.event_time ? `• ${e.event_time.slice(0, 5)}` : ""}
+                {e.event_date ?? ""} {e.event_time ? ` • ${e.event_time.slice(0, 5)}` : ""}
               </span>
-            </p>
+            </div>
           )}
-          {e.location ? (
-            <p className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-gray-400" />
+          {e.location && (
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <MapPin className="h-4 w-4 text-purple-500" />
               <span className="line-clamp-1">{e.location}</span>
-            </p>
-          ) : null}
+            </div>
+          )}
         </div>
-        <div className="pt-2 flex items-center justify-between">
-          <a href={`/events/${e.id}`} className="text-sm font-medium text-indigo-600 hover:underline">
-            View
-          </a>
+
+        <div className="flex items-center justify-between">
+          <Link href={`/events/${e.id}`} className="inline-flex items-center justify-center rounded-full bg-indigo-600 text-white px-6 py-2 text-sm font-semibold hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg">
+            View Event
+          </Link>
           <ShareButton path={`/events/${e.id}`} title={e.name} text={e.description ?? undefined} />
         </div>
       </div>
-    </li>
+    </div>
   );
 }
 
-/* ===========================
-   Our Partners section
-   =========================== */
+// -----------------------------
+// Partners (modernized)
+// -----------------------------
 function PartnersSection() {
   const SPONSORS = [
     {
       name: "Oceanblue Solutions",
       logo: "https://www.oceanbluecorp.com/images/logo.png",
       href: "https://www.oceanbluecorp.com/",
-      tagline: "Sustainability & tech",
+      tagline: "Sustainability & Technology Solutions",
+      description: "Leading provider of sustainable technology solutions for modern businesses.",
     },
     {
       name: "Inytes",
       logo: "https://cdn.inytes.com/images/brand/inytes-logo.png",
       href: "https://www.inytes.com/",
-      tagline: "Invitation & events",
+      tagline: "Invitation & Event Management",
+      description: "Professional event management and invitation platform for seamless experiences.",
     },
   ];
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold">Our Partners</h2>
-        <p className="text-xs text-gray-500">We’re grateful for their support.</p>
-      </div>
+    <section className="bg-white border-t border-gray-100">
+      <div className="mx-auto max-w-7xl px-4 py-16">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">Our Trusted Partners</h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">We're grateful to work with these amazing organizations who make our events possible</p>
+        </div>
 
-      <ul className="grid gap-6 sm:grid-cols-2">
-        {SPONSORS.map((s) => (
-          <li
-            key={s.name}
-            className="group flex items-center gap-4 rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={s.logo}
-              alt={`${s.name} logo`}
-              className="h-10 w-auto flex-none transition"
-            />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-gray-900">{s.name}</p>
-              {s.tagline ? <p className="truncate text-sm text-gray-600">{s.tagline}</p> : null}
-              <a
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-block text-xs font-medium text-indigo-600 hover:underline"
-              >
-                Visit website
-              </a>
+        <div className="grid gap-8 sm:grid-cols-2 max-w-4xl mx-auto">
+          {SPONSORS.map((sponsor) => (
+            <div key={sponsor.name} className="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-6 rounded-2xl bg-gray-50 p-6 group-hover:bg-gray-100 transition-colors">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={sponsor.logo} alt={`${sponsor.name} logo`} className="h-12 w-auto max-w-32 transition-transform group-hover:scale-105" />
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{sponsor.name}</h3>
+                <p className="text-sm font-medium text-indigo-600 mb-3">{sponsor.tagline}</p>
+                <p className="text-sm text-gray-600 mb-6 line-clamp-2">{sponsor.description}</p>
+
+                <a href={sponsor.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-full border-2 border-gray-200 bg-white px-6 py-2 text-sm font-semibold text-gray-700 transition-all hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md">
+                  Visit Website
+                  <svg className="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              </div>
+
+              {/* Decorative elements */}
+              <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 transition-transform group-hover:scale-110" />
+              <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-gradient-to-br from-purple-500/10 to-pink-500/10 transition-transform group-hover:scale-110" />
             </div>
-          </li>
-        ))}
-      </ul>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <div className="mt-16 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 mb-4">
+            <Users className="h-4 w-4" />
+            Interested in Partnering?
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Join Our Partner Network</h3>
+          <p className="text-gray-600 mb-6">Connect with us to explore partnership opportunities and help bring amazing events to life.</p>
+          <a href="mailto:gagankarthik123@gmail.com" className="inline-flex items-center justify-center rounded-full bg-indigo-600 text-white px-8 py-3 font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+            Get In Touch
+          </a>
+        </div>
+      </div>
     </section>
   );
 }
