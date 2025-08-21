@@ -50,9 +50,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@gagankarthik_mullapudi",
     creator: "@gagankarthik_mullapudi",
-    title: "CMH India — Discover events & RSVP fast",
+    title: "CMH India — Discover events",
     description:
-      "Find upcoming community events across India and RSVP instantly.",
+      "Find upcoming community events and Check out the latest happenings.",
     images: [`${siteUrl}/og/og-default.jpg`],
   },
   icons: {

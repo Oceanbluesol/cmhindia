@@ -12,8 +12,8 @@ type EventRow = {
   id: string;
   name: string;
   description: string | null;
-  event_date: string | null;
-  event_time: string | null;
+  event_date: string | null; // YYYY-MM-DD
+  event_time: string | null; // HH:mm or HH:mm:ss
   location: string | null;
   poster_url: string | null;
 };
@@ -21,22 +21,36 @@ type EventRow = {
 export default async function EventsPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  // Standard App Router typing (not a Promise)
+  searchParams?: Record<string, string | string[] | undefined>;
 }) {
-  const sp = await searchParams;
+  const sp = searchParams ?? {};
   const q = (Array.isArray(sp.q) ? sp.q[0] : sp.q)?.trim() ?? "";
-  const selectedDate = (Array.isArray(sp.date) ? sp.date[0] : sp.date)?.trim() ?? "";
+  const startParam = (Array.isArray(sp.start) ? sp.start[0] : sp.start)?.trim() ?? "";
+  const endParam = (Array.isArray(sp.end) ? sp.end[0] : sp.end)?.trim() ?? "";
+
+  const start = startParam;
+  const end = endParam;
 
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
   let query = supabase
     .from("events")
     .select("id,name,description,event_date,event_time,location,poster_url")
     .eq("status", "approved");
 
-  if (selectedDate) {
-    query = query.eq("event_date", selectedDate);
+  // Date filtering:
+  // - If both start & end provided -> BETWEEN inclusive
+  // - If only start -> >= start
+  // - If only end -> <= end
+  // - If none -> >= today (upcoming)
+  if (start && end) {
+    query = query.gte("event_date", start).lte("event_date", end);
+  } else if (start) {
+    query = query.gte("event_date", start);
+  } else if (end) {
+    query = query.lte("event_date", end);
   } else {
     query = query.gte("event_date", today);
   }
@@ -51,6 +65,34 @@ export default async function EventsPage({
   const { data } = await query.order("event_date", { ascending: true }).limit(100);
   const events = (data as EventRow[]) ?? [];
 
+  // Helper to render the meta line cleanly
+  const renderMeta = () => {
+    const hasRange = start || end;
+    return (
+      <p className="text-xs text-gray-500">
+        Showing <span className="font-medium">{events.length}</span>{" "}
+        {events.length === 1 ? "event" : "events"}
+        {q && (
+          <>
+            {" "}for <span className="font-medium">“{q}”</span>
+          </>
+        )}
+        {hasRange && (
+          <>
+            {" "}from{" "}
+            <span className="font-medium">{start || "—"}</span> to{" "}
+            <span className="font-medium">{end || "—"}</span>
+          </>
+        )}
+        {!hasRange && (
+          <>
+            {" "}from <span className="font-medium">{today}</span> onward
+          </>
+        )}
+      </p>
+    );
+  };
+
   return (
     <div className="space-y-6 p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -63,33 +105,23 @@ export default async function EventsPage({
       </div>
 
       {/* Search */}
-      <EventsSearch initialQuery={q} initialDate={selectedDate} />
-
+      <EventsSearch
+        title="Find events"
+        initialQuery={q}
+        initialStart={start}
+        initialEnd={end}
+      />
 
       {/* Results meta */}
       <div className="flex items-center justify-between">
-       <p className="text-xs text-gray-500">
-  Showing <span className="font-medium">{events.length}</span>{" "}
-  {events.length === 1 ? "event" : "events"}
-  {q && (
-    <>
-      {" "}for <span className="font-medium">“{q}”</span>
-    </>
-  )}
-  {selectedDate && (
-    <>
-      {" "}on <span className="font-medium">{selectedDate}</span>
-    </>
-  )}
-</p>
-
+        {renderMeta()}
       </div>
 
       {/* Results */}
       {events.length === 0 ? (
         <div className="rounded-xl border bg-white p-10 text-center shadow-sm">
-          <p className="text-sm text-gray-600">No upcoming events found.</p>
-          <p className="mt-1 text-xs text-gray-500">Try a different search.</p>
+          <p className="text-sm text-gray-600">No events found.</p>
+          <p className="mt-1 text-xs text-gray-500">Try a different search or date range.</p>
         </div>
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -148,7 +180,6 @@ export default async function EventsPage({
                     View details
                   </Link>
 
-                  {/* NEW: Share button */}
                   <ShareButton
                     path={`/events/${e.id}`}
                     title={e.name}
