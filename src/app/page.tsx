@@ -5,41 +5,43 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabaseClient";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { Calendar, MapPin, ChevronLeft, ChevronRight, Search, Sparkles, Users } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Sparkles,
+  Users,
+  ArrowRight,
+  Star,
+} from "lucide-react";
 import HowItWorks from "@/components/how-it-works";
 import FAQ from "@/components/faq";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import ShareButton from "@/components/share-button";
 
-// -----------------------------
-// Types
-// -----------------------------
 type EventRow = {
   id: string;
   name: string;
   description: string | null;
-  event_date: string | null; // YYYY-MM-DD
-  event_time: string | null; // HH:mm:ss
+  event_date: string | null;
+  event_time: string | null;
   location: string | null;
   poster_url: string | null;
 };
 
-// -----------------------------
-// Page
-// -----------------------------
 export default function LandingPage() {
   const supabase = React.useMemo(() => createClient(), []);
   const [userId, setUserId] = React.useState<string | null>(null);
   const [events7d, setEvents7d] = React.useState<EventRow[]>([]);
   const [loading, setLoading] = React.useState(true);
 
-  // Header auth state
   React.useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, [supabase]);
 
-  // Fetch approved events in the next 7 days (client-side)
   React.useEffect(() => {
     (async () => {
       setLoading(true);
@@ -68,42 +70,47 @@ export default function LandingPage() {
     <>
       <SiteHeader userId={userId} />
 
-      {/* Modern hero header (keep carousel the same as OLD below) */}
-      <div className="mx-auto max-w-6xl px-4 pt-8 pb-4">
-         <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-3">
-           {/* Sponsors (left) */} 
-           <div className="flex items-center justify-center gap-6 sm:justify-start">
-             <a href="https://www.oceanbluecorp.com/" target="_blank" rel="noreferrer" aria-label="Oceanblue" className="inline-flex" >
+      {/* "Next 7 days" section header */}
+      <div className="mx-auto max-w-7xl px-4 pt-14 pb-4">
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+          {/* Sponsor logos */}
+          <div className="flex items-center gap-5">
+            <a href="https://www.oceanbluecorp.com/" target="_blank" rel="noreferrer" aria-label="Oceanblue" className="opacity-70 hover:opacity-100 transition-opacity">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-               <img src="https://www.oceanbluecorp.com/images/logo.png" alt="Oceanblue" className="h-8 w-auto transition" /> </a> 
-               <a href="https://www.inytes.com/" target="_blank" rel="noreferrer" aria-label="Inytes" className="inline-flex" > 
-               {/* eslint-disable-next-line @next/next/no-img-element */} <img src="https://cdn.inytes.com/images/brand/inytes-logo.png" alt="Inytes" className="h-8 w-auto transition" />
-                </a> </div> {/* Title (center) */} 
-                <h1 className="text-center text-xl font-semibold tracking-tight sm:text-2xl"> Happening in the next 7 days </h1>
-                 {/* Browse (right) */} 
-                 <div className="flex items-center justify-center sm:justify-end">
-                   <Link href="/events" className="rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50" > Browse all </Link>
-                    </div> 
-                    </div> 
-                    </div>
+              <img src="https://oceanbluecorp.com/_next/image?url=%2Flogo.png&w=256&q=75" alt="Oceanblue" className="h-7 w-auto" />
+            </a>
+            <a href="https://www.inytes.com/" target="_blank" rel="noreferrer" aria-label="Inytes" className="opacity-70 hover:opacity-100 transition-opacity">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="https://cdn.inytes.com/images/brand/inytes-logo.png" alt="Inytes" className="h-7 w-auto" />
+            </a>
+          </div>
 
-      {/* FULL-BLEED CAROUSEL — kept EXACT from OLD version */}
+          {/* Title */}
+          <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
+            Happening in the next 7 days
+          </h2>
+
+          {/* Browse link */}
+          <Link
+            href="/events"
+            className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-300 hover:text-indigo-600 transition-all"
+          >
+            Browse all <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+
       <HeroCarousel items={events7d} loading={loading} />
-
-      {/* Featured Events (modernized) */}
       <EventsTeaser items={events7d} loading={loading} />
-
-      {/* All Upcoming Events (modernized) */}
       <AllUpcomingEvents />
-
-      {/* Partners (modernized) */}
       <PartnersSection />
 
-      {/* How it works & FAQ */}
-      <div className="bg-gray-50">
+      <div className="bg-gray-50" id="how">
         <main className="mx-auto max-w-7xl px-4 py-16 space-y-20">
           <HowItWorks isAuthed={!!userId} />
-          <FAQ />
+          <div id="faq">
+            <FAQ />
+          </div>
         </main>
       </div>
 
@@ -112,64 +119,94 @@ export default function LandingPage() {
   );
 }
 
-// -----------------------------
-// Header (modernized version)
-// -----------------------------
+
+
+// ─────────────────────────────────────────────
+// Site Header
+// ─────────────────────────────────────────────
 function SiteHeader({ userId }: { userId: string | null }) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-md shadow-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+        <Link href="/" className="flex items-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="cmh india" className="h-8 w-auto sm:w-48" />
+          <img src="/logo.svg" alt="CMH India" className="h-8 w-auto sm:w-48" />
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden gap-8 md:flex justify-center items-center">
-          <Link href="/" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">Home</Link>
-          <Link href="/events" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">All Events</Link>
-          <Link href="/#how" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">How it works</Link>
-          <Link href="/#faq" className="text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">FAQ</Link>
-        
-
-        {/* Auth Buttons */}
-        {userId ? (
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">Dashboard</Link>
-            <form action="/auth/signout" method="post">
-              <button type="submit" className="rounded-full bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition-all">Sign out</button>
-            </form>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">Sign in</Link>
-            <Link href="/auth/signup" className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl">Sign up</Link>
-          </div>
-        )}
+        {/* Desktop Nav */}
+        <nav className="hidden items-center gap-7 md:flex">
+          <Link href="/" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">Home</Link>
+          <Link href="/events" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">All Events</Link>
+          <Link href="/#how" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">How it works</Link>
+          <Link href="/#faq" className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors">FAQ</Link>
         </nav>
 
-        {/* Mobile menu button */}
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden rounded-lg p-2 text-gray-600 hover:bg-gray-100">
+        {/* Desktop Auth */}
+        <div className="hidden items-center gap-3 md:flex">
+          {userId ? (
+            <>
+              <Link href="/dashboard" className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">
+                Dashboard
+              </Link>
+              <form action="/auth/signout" method="post">
+                <button type="submit" className="rounded-full bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 transition-all">
+                  Sign out
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link href="/auth/login" className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">
+                Sign in
+              </Link>
+              <Link href="/auth/signup" className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-indigo-700 hover:shadow-md transition-all">
+                Sign up
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+          aria-label="Toggle menu"
+        >
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            {mobileMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
           </svg>
         </button>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Nav */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t bg-white">
-          <div className="space-y-1 px-4 py-4">
-            <Link href="/" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">Home</Link>
-            <Link href="/events" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">All Events</Link>
-            <Link href="/#how" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">How it works</Link>
-            <Link href="/#faq" className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100">FAQ</Link>
-            {/* Auth Links */}
-            <Link href="/auth/login" className="block rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all">Sign in</Link>
-            <Link href="/auth/signup" className="block rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl">Sign up</Link>
-
+        <div className="border-t bg-white shadow-lg md:hidden">
+          <div className="space-y-0.5 px-4 py-3">
+            <Link href="/" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100">Home</Link>
+            <Link href="/events" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100">All Events</Link>
+            <Link href="/#how" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100">How it works</Link>
+            <Link href="/#faq" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100">FAQ</Link>
+            <div className="mt-1 border-t pt-2 space-y-0.5">
+              {userId ? (
+                <>
+                  <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100">Dashboard</Link>
+                  <form action="/auth/signout" method="post">
+                    <button type="submit" className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600 hover:bg-red-50">Sign out</button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100">Sign in</Link>
+                  <Link href="/auth/signup" onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm font-semibold text-indigo-600 hover:bg-indigo-50">Sign up</Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -177,12 +214,12 @@ function SiteHeader({ userId }: { userId: string | null }) {
   );
 }
 
-// -----------------------------
-// HERO CAROUSEL 
-// -----------------------------
+// ─────────────────────────────────────────────
+// Hero Carousel
+// ─────────────────────────────────────────────
 function HeroCarousel({ items, loading }: { items: EventRow[]; loading: boolean }) {
   return (
-    <section className="relative left-1/2 right-1/2 -mx-[50vw] w-screen">
+    <section className="relative left-1/2 right-1/2 -mx-[50vw] w-screen border-y border-gray-100">
       <Carousel slides={items} loading={loading} />
     </section>
   );
@@ -191,7 +228,7 @@ function HeroCarousel({ items, loading }: { items: EventRow[]; loading: boolean 
 function Carousel({ slides, loading }: { slides: EventRow[]; loading: boolean }) {
   const [emblaRef, emblaApi] = useEmblaCarousel(
     { loop: slides.length > 1, align: "start" },
-    [Autoplay({ delay: 4000, stopOnInteraction: false })]
+    [Autoplay({ delay: 4500, stopOnInteraction: false })]
   );
   const [selectedIndex, setSelectedIndex] = React.useState(0);
 
@@ -207,7 +244,7 @@ function Carousel({ slides, loading }: { slides: EventRow[]; loading: boolean })
   }, [emblaApi, onSelect]);
 
   return (
-    <div className="relative">
+    <div className="relative bg-white">
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {loading && (
@@ -215,13 +252,11 @@ function Carousel({ slides, loading }: { slides: EventRow[]; loading: boolean })
               <SkeletonSlide />
             </div>
           )}
-
           {!loading && slides.length === 0 && (
             <div className="min-w-0 flex-[0_0_100%]">
               <EmptySlide />
             </div>
           )}
-
           {!loading && slides.map((e) => <Slide key={e.id} event={e} />)}
         </div>
       </div>
@@ -232,30 +267,30 @@ function Carousel({ slides, loading }: { slides: EventRow[]; loading: boolean })
           <button
             aria-label="Previous"
             onClick={() => emblaApi?.scrollPrev()}
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/95 p-2.5 shadow-md hover:bg-white hover:shadow-lg transition-all border border-gray-100"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-5 w-5 text-gray-700" />
           </button>
           <button
             aria-label="Next"
             onClick={() => emblaApi?.scrollNext()}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow hover:bg-white"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 rounded-full bg-white/95 p-2.5 shadow-md hover:bg-white hover:shadow-lg transition-all border border-gray-100"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-5 w-5 text-gray-700" />
           </button>
         </>
       )}
 
       {/* Dots */}
       {slides.length > 1 && (
-        <div className="flex items-center justify-center gap-2 py-4">
+        <div className="flex items-center justify-center gap-2 py-3">
           {slides.map((_, i) => (
             <button
               key={i}
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => emblaApi?.scrollTo(i)}
-              className={`h-2.5 w-2.5 rounded-full transition ${
-                i === selectedIndex ? "bg-gray-900" : "bg-gray-300 hover:bg-gray-400"
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === selectedIndex ? "w-6 bg-indigo-600" : "w-2 bg-gray-300 hover:bg-gray-400"
               }`}
             />
           ))}
@@ -267,61 +302,79 @@ function Carousel({ slides, loading }: { slides: EventRow[]; loading: boolean })
 
 function Slide({ event: e }: { event: EventRow }) {
   return (
-    <a
-      href={`/events/${e.id}`}
-      className="group flex min-w-0 flex-[0_0_100%] flex-col overflow-hidden sm:flex-row sm:h[70vh]"
-      aria-label={`View ${e.name}`}
-    >
-      {/* Image half */}
-      <div className="w-full sm:w-1/2 h-[40vh] sm:h-[70vh]">
-        {e.poster_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={e.poster_url} alt={e.name} className="h-full w-full object-contain" />
-        ) : (
-          <div className="h-full w-full bg-gray-200" />
-        )}
-      </div>
+    /* Outer is a div — prevents nested <a> since View Details button is also a link */
+    <div className="group flex min-w-0 flex-[0_0_100%] flex-col overflow-hidden sm:flex-row">
+      {/* Poster — clicking the image navigates to the event */}
+      <Link
+        href={`/events/${e.id}`}
+        className="block w-full sm:w-1/2"
+        tabIndex={-1}
+        aria-hidden
+      >
+        <div className="h-[50vw] max-h-[480px] min-h-[220px] w-full overflow-hidden bg-gray-100">
+          {e.poster_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={e.poster_url}
+              alt={e.name}
+              className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100" />
+          )}
+        </div>
+      </Link>
 
-      {/* Details half */}
-      <div className="flex w-full flex-col justify-center bg-white px-6 py-8 sm:w-1/2 sm:px-10 sm:py-12">
-        <div className="mb-2 flex flex-wrap items-center gap-3 text-sm text-gray-600">
-          <span className="inline-flex items-center gap-1">
-            <Calendar className="h-4 w-4" />
-            {e.event_date ?? ""}
-            {e.event_time ? ` • ${e.event_time.slice(0, 5)}` : ""}
-          </span>
+      {/* Details */}
+      <div className="flex w-full flex-col justify-center bg-white px-6 py-8 sm:w-1/2 sm:px-10 sm:py-14 lg:px-14">
+        {/* Date & Location chips */}
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          {(e.event_date || e.event_time) && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+              <Calendar className="h-3.5 w-3.5" />
+              {e.event_date ?? ""}
+              {e.event_time ? ` • ${e.event_time.slice(0, 5)}` : ""}
+            </span>
+          )}
           {e.location && (
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-3 py-1 text-xs font-medium text-purple-700">
+              <MapPin className="h-3.5 w-3.5" />
               {e.location}
             </span>
           )}
         </div>
 
-        <h3 className="text-2xl font-semibold text-gray-900 sm:text-3xl">{e.name}</h3>
+        <h3 className="text-2xl font-bold leading-tight text-gray-900 sm:text-3xl lg:text-4xl">
+          {e.name}
+        </h3>
 
         {e.description && (
-          <p className="mt-3 line-clamp-3 text-sm text-gray-700">{e.description}</p>
+          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-gray-500 sm:text-base">
+            {e.description}
+          </p>
         )}
 
-        <div className="mt-6 flex gap-3">
-          <Button asChild>
+        <div className="mt-7 flex items-center gap-3">
+          <Button asChild size="default" className="rounded-full px-6 font-semibold shadow hover:shadow-md">
             <Link href={`/events/${e.id}`}>View Details</Link>
           </Button>
           <ShareButton path={`/events/${e.id}`} title={e.name} text={e.description ?? ""} />
         </div>
       </div>
-    </a>
+    </div>
   );
 }
 
 function SkeletonSlide() {
   return (
-    <div className="relative min-w-0 flex-[0_0_100%]">
-      <div className="h-[60vh] w-full animate-pulse bg-gray-200 sm:h-[70vh]" />
-      <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-8 text-white">
-        <div className="h-6 w-3/4 animate-pulse rounded bg-white/40" />
-        <div className="mt-3 h-3 w-1/2 animate-pulse rounded bg-white/30" />
+    <div className="flex min-w-0 flex-[0_0_100%] flex-col sm:flex-row">
+      <div className="h-[50vw] max-h-[480px] min-h-[220px] w-full animate-pulse bg-gray-200 sm:w-1/2" />
+      <div className="flex w-full flex-col justify-center gap-4 bg-white px-6 py-8 sm:w-1/2 sm:px-10">
+        <div className="h-4 w-1/3 animate-pulse rounded-full bg-gray-100" />
+        <div className="h-9 w-3/4 animate-pulse rounded-xl bg-gray-100" />
+        <div className="h-4 w-full animate-pulse rounded-full bg-gray-100" />
+        <div className="h-4 w-2/3 animate-pulse rounded-full bg-gray-100" />
+        <div className="mt-2 h-10 w-36 animate-pulse rounded-full bg-gray-100" />
       </div>
     </div>
   );
@@ -329,56 +382,74 @@ function SkeletonSlide() {
 
 function EmptySlide() {
   return (
-    <div className="relative min-w-0 flex-[0_0_100%]">
-      <div className="h-[60vh] w-full bg-gray-100 sm:h-[70vh]" />
-      <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-gray-700">
-        <div>
-          <p className="text-sm">No events in the next 7 days.</p>
-          <a href="/events" className="mt-3 inline-flex items-center justify-center rounded-lg border px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
-            Browse all events
-          </a>
+    <div className="flex min-w-0 flex-[0_0_100%] items-center justify-center bg-gray-50 py-20 px-6 text-center">
+      <div>
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+          <Calendar className="h-8 w-8 text-gray-400" />
         </div>
+        <p className="font-semibold text-gray-800 mb-1">No events in the next 7 days</p>
+        <p className="text-sm text-gray-500 mb-5">Check out all our upcoming events!</p>
+        <Link
+          href="/events"
+          className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all"
+        >
+          Browse all events <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
     </div>
   );
 }
 
-// -----------------------------
-// Featured Events (modernized)
-// -----------------------------
+// ─────────────────────────────────────────────
+// Events Teaser
+// ─────────────────────────────────────────────
 function EventsTeaser({ items, loading }: { items: EventRow[]; loading: boolean }) {
   const subset = items.slice(0, 6);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16">
-      <div className="mb-12 text-center">
-        <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">Featured Events</h2>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">Don't miss these amazing events happening in the next 7 days</p>
+    <section className="mx-auto max-w-7xl px-4 py-16 sm:py-20">
+      {/* Section header */}
+      <div className="mb-10 flex flex-col items-center text-center">
+        <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-1.5 text-sm font-semibold text-indigo-700">
+          <Sparkles className="h-3.5 w-3.5" /> This week&apos;s highlights
+        </span>
+        <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Featured Events</h2>
+        <p className="mt-2 max-w-xl text-base text-gray-500">
+          Don&apos;t miss these amazing events happening in the next 7 days
+        </p>
       </div>
 
       {loading ? (
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-80 animate-pulse rounded-3xl bg-gray-200" />
+            <div key={i} className="h-80 animate-pulse rounded-2xl bg-gray-200" />
           ))}
         </div>
       ) : subset.length === 0 ? (
-        <div className="rounded-3xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center">
-          <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No Featured Events</h3>
-          <p className="text-gray-600 mb-6">Check out all our upcoming events instead!</p>
-          <Link href="/events" className="inline-flex items-center justify-center rounded-full bg-indigo-600 text-white px-6 py-3 font-semibold hover:bg-indigo-700 transition-all">View All Events</Link>
+        <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-16 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
+            <Calendar className="h-7 w-7 text-gray-400" />
+          </div>
+          <h3 className="mb-1 text-base font-bold text-gray-900">No Featured Events Right Now</h3>
+          <p className="mb-6 text-sm text-gray-500">Check out all our upcoming events instead!</p>
+          <Link href="/events" className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow hover:bg-indigo-700 transition-all">
+            View All Events
+          </Link>
         </div>
       ) : (
         <>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {subset.map((e) => (
               <EventCard key={e.id} e={e} />
             ))}
           </div>
-
-          <div className="mt-12 text-center">
-            <Link href="/events" className="inline-flex items-center justify-center rounded-full bg-indigo-600 text-white px-8 py-4 font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">View All Events</Link>
+          <div className="mt-10 text-center">
+            <Link
+              href="/events"
+              className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-indigo-700 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+            >
+              View All Events <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </>
       )}
@@ -386,39 +457,33 @@ function EventsTeaser({ items, loading }: { items: EventRow[]; loading: boolean 
   );
 }
 
-// -----------------------------
-// All Upcoming Events (modernized)
-// -----------------------------
+// ─────────────────────────────────────────────
+// All Upcoming Events
+// ─────────────────────────────────────────────
 function AllUpcomingEvents() {
   const supabase = React.useMemo(() => createClient(), []);
   const PAGE_SIZE = 12;
 
   const [q, setQ] = React.useState("");
   const [typing, setTyping] = React.useState(false);
-  const [page, setPage] = React.useState(0);
   const [items, setItems] = React.useState<EventRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [hasMore, setHasMore] = React.useState(true);
 
-  // Debounce query input
   React.useEffect(() => {
     setTyping(true);
     const t = setTimeout(() => setTyping(false), 350);
     return () => clearTimeout(t);
   }, [q]);
 
+  const pageRef = React.useRef(0);
+
   const fetchPage = React.useCallback(
     async (reset = false) => {
-      if (reset) {
-        setPage(0);
-        setHasMore(true);
-        setItems([]);
-      }
-      const currentPage = reset ? 0 : page;
-      const from = currentPage * PAGE_SIZE;
+      if (reset) pageRef.current = 0;
+      const from = pageRef.current * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
-
       const today = new Date().toISOString().slice(0, 10);
       const like = q ? `%${q}%` : "";
 
@@ -433,16 +498,14 @@ function AllUpcomingEvents() {
         : base;
 
       const { data } = await finalQuery.order("event_date", { ascending: true }).range(from, to);
-
       const newItems = (data as EventRow[]) ?? [];
       setItems((prev) => (reset ? newItems : [...prev, ...newItems]));
       setHasMore(newItems.length === PAGE_SIZE);
-      if (!reset) setPage((p) => p + 1);
+      pageRef.current += 1;
     },
-    [PAGE_SIZE, page, q, supabase]
+    [q, supabase]
   );
 
-  // Initial load & on q change
   React.useEffect(() => {
     let mounted = true;
     (async () => {
@@ -450,63 +513,80 @@ function AllUpcomingEvents() {
       await fetchPage(true);
       if (mounted) setLoading(false);
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [fetchPage]);
 
   const showLoading = loading || typing;
 
   return (
     <section className="bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 py-16">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">All Upcoming Events</h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">Discover all the amazing events coming up in your area</p>
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:py-20">
+        {/* Section header */}
+        <div className="mb-10 flex flex-col items-center text-center">
+          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">All Upcoming Events</h2>
+          <p className="mt-2 max-w-xl text-base text-gray-500 mb-7">
+            Discover all the amazing events coming up in your area
+          </p>
 
-          <div className="relative max-w-xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          {/* Search bar */}
+          <div className="relative w-full max-w-xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search by name, description, or location..."
-              className="w-full rounded-full border-2 border-gray-200 bg-white pl-12 pr-4 py-3 text-sm focus:border-indigo-500 focus:outline-none shadow-sm"
+              placeholder="Search events by name, location…"
+              className="w-full rounded-full border border-gray-200 bg-white py-3 pl-11 pr-5 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
             />
+            {q && (
+              <button
+                onClick={() => setQ("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Clear search"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Results meta */}
-        <div className="mb-8 text-center">
-          <p className="text-sm text-gray-500">{showLoading ? "Searching..." : `Found ${items.length} events${q ? ` for "${q}"` : ""}`}</p>
-        </div>
+        {/* Result count */}
+        <p className="mb-6 text-center text-xs text-gray-400">
+          {showLoading ? "Searching…" : `${items.length} event${items.length !== 1 ? "s" : ""} found${q ? ` for "${q}"` : ""}`}
+        </p>
 
         {/* Grid */}
         {showLoading && items.length === 0 ? (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: PAGE_SIZE }).map((_, i) => (
-              <div key={i} className="h-80 animate-pulse rounded-3xl bg-gray-200" />
+              <div key={i} className="h-72 animate-pulse rounded-2xl bg-gray-200" />
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-3xl border-2 border-dashed border-gray-300 bg-white p-12 text-center">
-            <Search className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Events Found</h3>
-            <p className="text-gray-600 mb-6">Try adjusting your search or check back later for new events.</p>
-            <button onClick={() => setQ("")} className="inline-flex items-center justify-center rounded-full bg-indigo-600 text-white px-6 py-3 font-semibold hover:bg-indigo-700 transition-all">
+          <div className="rounded-2xl border-2 border-dashed border-gray-200 bg-white p-14 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
+              <Search className="h-7 w-7 text-gray-400" />
+            </div>
+            <h3 className="mb-1 text-base font-bold text-gray-900">No Events Found</h3>
+            <p className="mb-5 text-sm text-gray-500">Try adjusting your search or check back later.</p>
+            <button
+              onClick={() => setQ("")}
+              className="inline-flex items-center rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow hover:bg-indigo-700 transition-all"
+            >
               Clear Search
             </button>
           </div>
         ) : (
           <>
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((e) => (
                 <EventCard key={e.id} e={e} />
               ))}
             </div>
 
-            {/* Load more */}
             {hasMore && (
-              <div className="mt-12 text-center">
+              <div className="mt-10 text-center">
                 <Button
                   variant="outline"
                   size="lg"
@@ -516,9 +596,9 @@ function AllUpcomingEvents() {
                     setLoadingMore(false);
                   }}
                   disabled={loadingMore}
-                  className="rounded-full"
+                  className="rounded-full px-8 font-semibold"
                 >
-                  {loadingMore ? "Loading..." : "Load More Events"}
+                  {loadingMore ? "Loading…" : "Load More Events"}
                 </Button>
               </div>
             )}
@@ -529,47 +609,58 @@ function AllUpcomingEvents() {
   );
 }
 
-// -----------------------------
-// Event Card (modernized)
-// -----------------------------
+// ─────────────────────────────────────────────
+// Event Card
+// ─────────────────────────────────────────────
 function EventCard({ e }: { e: EventRow }) {
   return (
-    <div className="group overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
-      <div className="relative">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-indigo-100">
+      {/* Poster */}
+      <Link href={`/events/${e.id}`} className="block overflow-hidden" tabIndex={-1}>
         {e.poster_url ? (
-          <img src={e.poster_url} alt={e.name} className="h-48 w-full object-cover" />
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={e.poster_url}
+            alt={e.name}
+            className="h-48 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
         ) : (
-          <div className="h-48 w-full bg-gradient-to-br from-indigo-500 to-purple-600" />
+          <div className="h-48 w-full bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-      </div>
+      </Link>
 
-      <div className="p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-indigo-600 transition-colors">{e.name}</h3>
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="mb-2 text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-indigo-600 transition-colors leading-snug">
+          {e.name}
+        </h3>
 
-        {e.description && <p className="text-sm text-gray-600 mb-4 line-clamp-2">{e.description}</p>}
+        {e.description && (
+          <p className="mb-4 flex-1 text-xs leading-relaxed text-gray-500 line-clamp-2">
+            {e.description}
+          </p>
+        )}
 
-        <div className="space-y-2 mb-6">
+        <div className="mb-4 space-y-1.5">
           {(e.event_date || e.event_time) && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Calendar className="h-4 w-4 text-indigo-500" />
-              <span>
-                {e.event_date ?? ""} {e.event_time ? ` • ${e.event_time.slice(0, 5)}` : ""}
-              </span>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Calendar className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
+              <span>{e.event_date ?? ""}{e.event_time ? ` • ${e.event_time.slice(0, 5)}` : ""}</span>
             </div>
           )}
           {e.location && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <MapPin className="h-4 w-4 text-purple-500" />
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-purple-400" />
               <span className="line-clamp-1">{e.location}</span>
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between">
-          <Link href={`/events/${e.id}`} className="inline-flex items-center justify-center rounded-full bg-indigo-600 text-white px-6 py-2 text-sm font-semibold hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg">
-            View Event
+        <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+          <Link
+            href={`/events/${e.id}`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-indigo-700 hover:shadow transition-all"
+          >
+            View Event <ArrowRight className="h-3 w-3" />
           </Link>
           <ShareButton path={`/events/${e.id}`} title={e.name} text={e.description ?? undefined} />
         </div>
@@ -578,16 +669,16 @@ function EventCard({ e }: { e: EventRow }) {
   );
 }
 
-// -----------------------------
-// Partners (modernized)
-// -----------------------------
+// ─────────────────────────────────────────────
+// Partners
+// ─────────────────────────────────────────────
 function PartnersSection() {
   const SPONSORS = [
     {
       name: "Oceanblue Solutions",
-      logo: "https://www.oceanbluecorp.com/images/logo.png",
+      logo: "https://oceanbluecorp.com/_next/image?url=%2Flogo.png&w=256&q=75",
       href: "https://www.oceanbluecorp.com/",
-      tagline: "Sustainability & Technology Solutions",
+      tagline: "Sustainability & Technology",
       description: "Leading provider of sustainable technology solutions for modern businesses.",
     },
     {
@@ -600,50 +691,60 @@ function PartnersSection() {
   ];
 
   return (
-    <section className="bg-white border-t border-gray-100">
-      <div className="mx-auto max-w-7xl px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">Our Trusted Partners</h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">We're grateful to work with these amazing organizations who make our events possible</p>
+    <section className="border-t border-gray-100 bg-white">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:py-20">
+        <div className="mb-10 text-center">
+          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Our Trusted Partners</h2>
+          <p className="mt-2 text-base text-gray-500 max-w-xl mx-auto">
+            We&apos;re grateful to work with these amazing organizations who make our events possible
+          </p>
         </div>
 
-        <div className="grid gap-8 sm:grid-cols-2 max-w-4xl mx-auto">
-          {SPONSORS.map((sponsor) => (
-            <div key={sponsor.name} className="group relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-              <div className="flex flex-col items-center text-center">
-                <div className="mb-6 rounded-2xl bg-gray-50 p-6 group-hover:bg-gray-100 transition-colors">
+        <div className="mx-auto grid max-w-3xl gap-5 sm:grid-cols-2">
+          {SPONSORS.map((s) => (
+            <div
+              key={s.name}
+              className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-indigo-100"
+            >
+              {/* Decorative circles */}
+              <div className="pointer-events-none absolute -top-6 -right-6 h-24 w-24 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 transition-transform group-hover:scale-125" />
+              <div className="pointer-events-none absolute -bottom-6 -left-6 h-16 w-16 rounded-full bg-gradient-to-br from-purple-500/10 to-pink-500/10 transition-transform group-hover:scale-125" />
+
+              <div className="relative flex flex-col items-center text-center">
+                <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gray-50 transition-colors group-hover:bg-indigo-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={sponsor.logo} alt={`${sponsor.name} logo`} className="h-12 w-auto max-w-32 transition-transform group-hover:scale-105" />
+                  <img src={s.logo} alt={`${s.name} logo`} className="h-10 w-auto max-w-[80px] transition-transform group-hover:scale-110" />
                 </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{sponsor.name}</h3>
-                <p className="text-sm font-medium text-indigo-600 mb-3">{sponsor.tagline}</p>
-                <p className="text-sm text-gray-600 mb-6 line-clamp-2">{sponsor.description}</p>
-
-                <a href={sponsor.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-full border-2 border-gray-200 bg-white px-6 py-2 text-sm font-semibold text-gray-700 transition-all hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md">
-                  Visit Website
-                  <svg className="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
+                <h3 className="mb-0.5 text-base font-bold text-gray-900">{s.name}</h3>
+                <p className="mb-2 text-xs font-semibold text-indigo-600">{s.tagline}</p>
+                <p className="mb-5 text-xs text-gray-500 line-clamp-2 leading-relaxed">{s.description}</p>
+                <a
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-5 py-2 text-xs font-semibold text-gray-700 transition-all hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md"
+                >
+                  Visit Website <ArrowRight className="h-3 w-3" />
                 </a>
               </div>
-
-              {/* Decorative elements */}
-              <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 transition-transform group-hover:scale-110" />
-              <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-gradient-to-br from-purple-500/10 to-pink-500/10 transition-transform group-hover:scale-110" />
             </div>
           ))}
         </div>
 
-        {/* CTA */}
-        <div className="mt-16 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 mb-4">
+        {/* Partnership CTA */}
+        <div className="mt-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 p-10 text-center">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-indigo-100 px-4 py-1.5 text-sm font-semibold text-indigo-700">
             <Users className="h-4 w-4" />
             Interested in Partnering?
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Join Our Partner Network</h3>
-          <p className="text-gray-600 mb-6">Connect with us to explore partnership opportunities and help bring amazing events to life.</p>
-          <a href="mailto:gagankarthik123@gmail.com" className="inline-flex items-center justify-center rounded-full bg-indigo-600 text-white px-8 py-3 font-semibold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+          <h3 className="mb-2 text-xl font-extrabold text-gray-900">Join Our Partner Network</h3>
+          <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">
+            Connect with us to explore partnership opportunities and help bring amazing events to life.
+          </p>
+          <a
+            href="mailto:gagankarthik123@gmail.com"
+            className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-8 py-3 text-sm font-bold text-white shadow-lg hover:bg-indigo-700 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+          >
             Get In Touch
           </a>
         </div>

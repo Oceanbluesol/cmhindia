@@ -7,7 +7,8 @@ export default function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-4">
         <div>
           <div className="mb-3 flex items-center gap-2">
-            <img src="/logo.svg" alt="EventHub logo" className="h-8 w-48" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="CMH India" className="h-8 w-auto" />
           </div>
           <p className="text-sm text-gray-600">
             Discover the best events around you.

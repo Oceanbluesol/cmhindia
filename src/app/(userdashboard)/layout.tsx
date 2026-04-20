@@ -29,7 +29,8 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <header className="sticky top-0 z-20 border-b bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
-             <img src="/logo.svg" alt="EventHub logo" className="h-8 w-48" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="CMH India" className="h-8 w-auto sm:w-44" />
           </div>
 
           <nav className="hidden gap-6 md:flex">
