@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
@@ -114,17 +113,16 @@ export default function NewEventPage() {
             {/* Registration */}
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <Label>Registration Type *</Label>
-                <Select value={feeType} onValueChange={(v) => setFeeType(v as "free" | "paid")}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Free or Paid" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="free">Free</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                  </SelectContent>
-                </Select>
-                {/* mirror into the form for the server action */}
+                <Label htmlFor="registration_fee_type_select">Registration Type *</Label>
+                <select
+                  id="registration_fee_type_select"
+                  value={feeType}
+                  onChange={(e) => setFeeType(e.target.value as "free" | "paid")}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-200"
+                >
+                  <option value="free">Free</option>
+                  <option value="paid">Paid</option>
+                </select>
                 <input type="hidden" name="registration_fee_type" value={feeType} />
               </div>
 
